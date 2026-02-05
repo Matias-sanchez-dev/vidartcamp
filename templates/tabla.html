@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Tabla - {{ torneo.nombre }}{% endblock %}
+
+{% block nav_links %}
+<div class="flex items-center gap-2">
+    <a href="/" class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Inicio</a>
+    <a href="/fixture" class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Fixture</a>
+    <a href="/login" class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Ingresar</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-8">
+        <div class="flex items-start justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-3xl font-extrabold tracking-tight text-slate-900">Tabla de posiciones</h2>
+                <p class="text-slate-600 mt-1">{{ torneo.nombre }}</p>
+            </div>
+            <a href="/fixture" class="text-sm font-semibold text-slate-900 hover:underline">Ver fixture</a>
+        </div>
+
+        {% if equipos|length == 0 %}
+        <div class="text-gray-600">No hay equipos asignados a este torneo.</div>
+        {% else %}
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-slate-500 border-b bg-slate-50">
+                        <th class="py-3 px-4">#</th>
+                        <th class="py-3 px-4">Equipo</th>
+                        <th class="py-3 px-4">PJ</th>
+                        <th class="py-3 px-4">PG</th>
+                        <th class="py-3 px-4">PE</th>
+                        <th class="py-3 px-4">PP</th>
+                        <th class="py-3 px-4">GF</th>
+                        <th class="py-3 px-4">GC</th>
+                        <th class="py-3 px-4">DG</th>
+                        <th class="py-3 px-4">PTS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in equipos %}
+                    <tr class="border-b last:border-b-0 hover:bg-slate-50/60 transition">
+                        <td class="py-3 px-4 font-semibold text-slate-700">{{ loop.index }}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-900">{{ e.nombre }}</td>
+                        <td class="py-3 px-4 text-slate-700">{{ e.partidos_jugados }}</td>
+                        <td class="py-3 px-4 text-slate-700">{{ e.partidos_ganados }}</td>
+                        <td class="py-3 px-4 text-slate-700">{{ e.partidos_empatados }}</td>
+                        <td class="py-3 px-4 text-slate-700">{{ e.partidos_perdidos }}</td>
+                        <td class="py-3 px-4 text-slate-700">{{ e.goles_favor }}</td>
+                        <td class="py-3 px-4 text-slate-700">{{ e.goles_contra }}</td>
+                        <td class="py-3 px-4 text-slate-700">{{ e.diferencia_goles }}</td>
+                        <td class="py-3 px-4 font-extrabold text-slate-900">{{ e.puntos }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - Vidartcamp{% endblock %}
+
+{% block nav_links %}
+<a href="/" class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Inicio</a>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[70vh]">
+    <div class="bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-extrabold tracking-tight text-slate-900">Acceso Staff</h2>
+            <p class="text-slate-600 mt-2">Ingresá como administrador o portero</p>
+        </div>
+
+        {% if error %}
+        <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-xl mb-4 text-sm font-medium">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/admin/login">
+            <div class="mb-6">
+                <label for="username" class="block text-slate-700 font-semibold mb-2">Usuario</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-300"
+                    placeholder="admin"
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="mb-6">
+                <label for="password" class="block text-slate-700 font-semibold mb-2">Contraseña</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-300"
+                    placeholder="••••••••"
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <button
+                type="submit"
+                class="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-slate-800 transition duration-200"
+            >
+                Ingresar
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm text-slate-600">
+            <p>Admin de prueba: <strong class="text-slate-900">admin</strong></p>
+            <p>Contraseña: <strong class="text-slate-900">admin123</strong></p>
+
+            <div class="mt-4">
+                <p>Portero de prueba: <strong class="text-slate-900">portero</strong></p>
+                <p>Contraseña: <strong class="text-slate-900">portero123</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

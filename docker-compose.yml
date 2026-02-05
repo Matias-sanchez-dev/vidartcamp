@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  vidartcamp:
+    build: .
+    container_name: vidartcamp-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./vidartcamp.db:/app/vidartcamp.db
+    environment:
+      - SECRET_KEY=cambiar-en-produccion
+      - PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  vidartcamp-db:
