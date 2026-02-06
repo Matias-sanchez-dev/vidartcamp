@@ -227,7 +227,7 @@ async def startup_event():
     scheduler = BackgroundScheduler()
     scheduler.add_job(
         func=reset_ya_ingreso_diario,
-        trigger=CronTrigger(hour=0, minute=0),  # Todos los días a las 00:00
+        trigger=CronTrigger(hour=3, minute=0),  # Todos los días a las 00:00
         id='reset_daily_access',
         name='Reset diario de ya_ingreso',
         replace_existing=True
