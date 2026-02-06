@@ -22,24 +22,25 @@
         </div>
         {% endif %}
 
-        <div class="mb-4 sm:mb-6">
-            <label for="dni" class="block text-slate-700 font-semibold mb-2">DNI</label>
-            <input type="text" id="dni" name="dni" required
-                class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-300"
-                placeholder="Ingresa tu DNI" autocomplete="off">
-        </div>
+        <form method="POST" action="/login">
+            <div class="mb-4 sm:mb-6">
+                <label for="dni" class="block text-slate-700 font-semibold mb-2">DNI</label>
+                <input type="text" id="dni" name="dni" required
+                    class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-300"
+                    placeholder="Ingresa tu DNI" autocomplete="off">
+            </div>
 
-        <div class="mb-6">
-            <label for="password" class="block text-slate-700 font-semibold mb-2">Contraseña</label>
-            <input type="password" id="password" name="password" required
-                class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-300"
-                placeholder="Ingresa tu contraseña">
-        </div>
+            <div class="mb-4 sm:mb-6">
+                <label for="password" class="block text-slate-700 font-semibold mb-2">Contraseña</label>
+                <input type="password" id="password" name="password" required
+                    class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/15 focus:border-slate-300"
+                    placeholder="Ingresa tu contraseña">
+            </div>
 
-        <button type="submit"
-            class="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-slate-800 transition duration-200">
-            Ingresar
-        </button>
+            <button type="submit"
+                class="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-slate-800 transition duration-200">
+                Ingresar
+            </button>
         </form>
 
         <div class="mt-6 text-center text-sm text-slate-600">
