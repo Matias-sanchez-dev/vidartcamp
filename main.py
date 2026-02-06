@@ -410,7 +410,9 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
 @app.get("/logout")
 async def logout():
     response = RedirectResponse(url="/login", status_code=302)
+    # Limpiar AMBAS cookies por seguridad
     response.delete_cookie("access_token")
+    response.delete_cookie("admin_token")  # Por si acaso
     return response
 
 
@@ -499,7 +501,14 @@ async def validar_qr(request: Request, db: Session = Depends(get_db)):
 # ==================== ADMIN ROUTES ====================
 
 @app.get("/admin/login", response_class=HTMLResponse)
-async def admin_login_page(request: Request):
+async def admin_login_page(request: Request, db: Session = Depends(get_db)):
+    # Si ya tiene sesión de admin válida, redirigir al panel
+    admin = get_current_admin(request, db)
+    if admin:
+        return RedirectResponse(url="/admin", status_code=302)
+    
+    # Si tiene sesión de jugador, ignorarla y mostrar login
+    # (no importa que tenga access_token, debe logearse como admin)
     return templates.TemplateResponse("admin_login.html", {"request": request})
 
 
@@ -541,13 +550,11 @@ async def admin_login(
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_panel(request: Request, db: Session = Depends(get_db)):
-    admin_token = request.cookies.get("admin_token")
-    user_token = request.cookies.get("access_token")
     admin = get_current_admin(request, db)
     if not admin:
         response = RedirectResponse(url="/admin/login", status_code=302)
-        if admin_token:
-            response.delete_cookie("admin_token")
+        # Limpiar admin_token si existe
+        response.delete_cookie("admin_token")
         return response
 
     hoy = date.today()
@@ -620,6 +627,15 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         "ok": ok,
         "error": error,
     })
+
+
+@app.get("/admin/logout")
+async def admin_logout():
+    response = RedirectResponse(url="/admin/login", status_code=302)
+    # Limpiar AMBAS cookies por seguridad
+    response.delete_cookie("admin_token")
+    response.delete_cookie("access_token")  # Por si acaso
+    return response
 
 
 def recalculate_torneo_positions(torneo_id: int, db: Session):
