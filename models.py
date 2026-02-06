@@ -73,6 +73,7 @@ class Jugador(Base):
     telefono = Column(String, nullable=True)
     email = Column(String, nullable=True)
     activo = Column(Boolean, default=True)
+    ya_ingreso = Column(Boolean, default=False)  # Previene doble acceso
     
     # Relationships
     equipo = relationship("Equipo", back_populates="jugadores")

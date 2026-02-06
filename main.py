@@ -9,6 +9,8 @@ from typing import Optional, List
 import uuid
 import urllib.parse
 from sqlalchemy import desc
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from database import engine, get_db, Base
 from models import Usuario, Torneo, Equipo, Jugador, Partido, SesionQR
@@ -221,7 +223,33 @@ async def startup_event():
         
         print("✅ Base de datos inicializada con datos de prueba")
     
+    # Iniciar scheduler para reset diario
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        func=reset_ya_ingreso_diario,
+        trigger=CronTrigger(hour=0, minute=0),  # Todos los días a las 00:00
+        id='reset_daily_access',
+        name='Reset diario de ya_ingreso',
+        replace_existing=True
+    )
+    scheduler.start()
+    print("✅ Scheduler iniciado - Reset diario configurado para las 00:00")
+    
     db.close()
+
+
+def reset_ya_ingreso_diario():
+    """Resetea el estado ya_ingreso de todos los jugadores diariamente"""
+    db = next(get_db())
+    try:
+        cantidad = db.query(Jugador).update({Jugador.ya_ingreso: False})
+        db.commit()
+        print(f"✅ Reset diario ejecutado: {cantidad} jugadores reseteados a ya_ingreso=False")
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Error en reset diario: {e}")
+    finally:
+        db.close()
 
 
 # ==================== RUTAS PÚBLICAS ====================
@@ -437,17 +465,27 @@ async def validar_qr(request: Request, db: Session = Depends(get_db)):
     if not sesion:
         return JSONResponse(content={"status": "error", "mensaje": "QR no válido"})
     
+    # PROTECCIÓN CONTRA DOBLE ACCESO: Verificar si el jugador ya ingresó
+    jugador = db.query(Jugador).filter(Jugador.id == sesion.jugador_id).first()
+    
+    if jugador.ya_ingreso:
+        return JSONResponse(content={
+            "status": "error", 
+            "mensaje": "⚠️ ESTE JUGADOR YA INGRESÓ AL PREDIO (Intento de doble acceso)"
+        })
+    
     if sesion.usado:
         return JSONResponse(content={"status": "error", "mensaje": "QR ya utilizado"})
     
     if datetime.utcnow() > sesion.fecha_expiracion:
         return JSONResponse(content={"status": "error", "mensaje": "QR expirado"})
     
-    jugador = db.query(Jugador).filter(Jugador.id == sesion.jugador_id).first()
     equipo = db.query(Equipo).filter(Equipo.id == jugador.equipo_id).first()
     
+    # Marcar token como usado y jugador como ingresado
     sesion.usado = True
     sesion.fecha_uso = datetime.utcnow()
+    jugador.ya_ingreso = True  # Prevenir doble acceso
     db.commit()
     
     return JSONResponse(content={
