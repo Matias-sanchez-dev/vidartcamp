@@ -3,8 +3,11 @@
 {% block title %}Escáner - Vidartcamp{% endblock %}
 
 {% block nav_links %}
-<a href="/" class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Inicio</a>
-<a href="/admin/logout" class="rounded-lg px-3 py-2 text-sm font-semibold bg-white/10 hover:bg-white/15 text-white transition">Cerrar sesión</a>
+<a href="/"
+    class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Inicio</a>
+<a href="/admin/logout"
+    class="rounded-lg px-3 py-2 text-sm font-semibold bg-white/10 hover:bg-white/15 text-white transition">Cerrar
+    sesión</a>
 {% endblock %}
 
 {% block extra_head %}
@@ -13,36 +16,38 @@
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-8 mb-6">
+    <div class="bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-8 mb-4 sm:mb-6">
         <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-2 text-center">Escáner de QR</h2>
         <p class="text-slate-600 text-center mb-6">Validá el ingreso escaneando el QR del jugador.</p>
-        
+
         <div id="reader" class="mb-6"></div>
-        
+
         <div id="result" class="hidden">
             <!-- Success message -->
             <div id="success-msg" class="hidden bg-emerald-600 text-white p-8 rounded-2xl text-center">
                 <div class="text-6xl mb-4">✓</div>
                 <h3 class="text-3xl font-extrabold mb-4 tracking-tight">ACCESO PERMITIDO</h3>
                 <div id="player-info" class="text-xl"></div>
-                <button onclick="resetScanner()" class="mt-6 bg-white/95 text-emerald-900 px-6 py-3 rounded-xl font-semibold hover:bg-white transition duration-200">
+                <button onclick="resetScanner()"
+                    class="mt-6 bg-white/95 text-emerald-900 px-6 py-3 rounded-xl font-semibold hover:bg-white transition duration-200">
                     Escanear Siguiente
                 </button>
             </div>
-            
+
             <!-- Error message -->
             <div id="error-msg" class="hidden bg-rose-600 text-white p-8 rounded-2xl text-center">
                 <div class="text-6xl mb-4">×</div>
                 <h3 class="text-3xl font-extrabold mb-4 tracking-tight">ACCESO DENEGADO</h3>
                 <div id="error-info" class="text-xl"></div>
-                <button onclick="resetScanner()" class="mt-6 bg-white/95 text-rose-900 px-6 py-3 rounded-xl font-semibold hover:bg-white transition duration-200">
+                <button onclick="resetScanner()"
+                    class="mt-6 bg-white/95 text-rose-900 px-6 py-3 rounded-xl font-semibold hover:bg-white transition duration-200">
                     Escanear Siguiente
                 </button>
             </div>
         </div>
     </div>
-    
-    <div class="bg-white/80 backdrop-blur border border-slate-200 rounded-2xl shadow-sm p-6">
+
+    <div class="bg-white/80 backdrop-blur border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-6">
         <h3 class="font-extrabold text-slate-900 mb-2">Instrucciones</h3>
         <ul class="text-sm text-slate-700 space-y-2 list-disc pl-5">
             <li>Permite el acceso a la cámara cuando se solicite</li>
@@ -54,113 +59,117 @@
 </div>
 
 <script>
-let html5QrcodeScanner = null;
-let isProcessing = false;
+    let html5QrcodeScanner = null;
+    let isProcessing = false;
 
-function onScanSuccess(decodedText, decodedResult) {
-    if (isProcessing) return;
-    isProcessing = true;
-    
-    // Stop scanning
-    html5QrcodeScanner.pause(true);
-    
-    // Validate QR
-    validarQR(decodedText);
-}
+    function onScanSuccess(decodedText, decodedResult) {
+        if (isProcessing) return;
+        isProcessing = true;
 
-async function validarQR(token) {
-    try {
-        const response = await fetch('/api/validar-qr', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ token: token })
-        });
-        
-        const data = await response.json();
-        
-        // Hide scanner
-        document.getElementById('reader').classList.add('hidden');
-        document.getElementById('result').classList.remove('hidden');
-        
-        if (data.status === 'ok') {
-            // Show success
-            document.getElementById('success-msg').classList.remove('hidden');
-            document.getElementById('error-msg').classList.add('hidden');
-            document.getElementById('player-info').innerHTML = `
+        // Stop scanning
+        html5QrcodeScanner.pause(true);
+
+        // Validate QR
+        validarQR(decodedText);
+    }
+
+    async function validarQR(token) {
+        try {
+            const response = await fetch('/api/validar-qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: token })
+            });
+
+            const data = await response.json();
+
+            // Hide scanner
+            document.getElementById('reader').classList.add('hidden');
+            document.getElementById('result').classList.remove('hidden');
+
+            if (data.status === 'ok') {
+                // Show success
+                document.getElementById('success-msg').classList.remove('hidden');
+                document.getElementById('error-msg').classList.add('hidden');
+                document.getElementById('player-info').innerHTML = `
                 <p class="mb-2"><strong>Nombre:</strong> ${data.nombre}</p>
                 <p class="mb-2"><strong>Equipo:</strong> ${data.equipo}</p>
                 <p><strong>DNI:</strong> ${data.dni}</p>
             `;
-            
-            // Play success sound (optional)
-            playSound('success');
-        } else {
+
+                // Play success sound (optional)
+                playSound('success');
+            } else {
+                // Show error
+                document.getElementById('error-msg').classList.remove('hidden');
+                document.getElementById('success-msg').classList.add('hidden');
+                document.getElementById('error-info').innerHTML = `<p>${data.mensaje}</p>`;
+
+                // Play error sound (optional)
+                playSound('error');
+            }
+        } catch (error) {
             // Show error
             document.getElementById('error-msg').classList.remove('hidden');
             document.getElementById('success-msg').classList.add('hidden');
-            document.getElementById('error-info').innerHTML = `<p>${data.mensaje}</p>`;
-            
-            // Play error sound (optional)
+            document.getElementById('error-info').innerHTML = `<p>Error de conexión: ${error.message}</p>`;
             playSound('error');
         }
-    } catch (error) {
-        // Show error
-        document.getElementById('error-msg').classList.remove('hidden');
+    }
+
+    function resetScanner() {
+        isProcessing = false;
+        document.getElementById('reader').classList.remove('hidden');
+        document.getElementById('result').classList.add('hidden');
         document.getElementById('success-msg').classList.add('hidden');
-        document.getElementById('error-info').innerHTML = `<p>Error de conexión: ${error.message}</p>`;
-        playSound('error');
-    }
-}
+        document.getElementById('error-msg').classList.add('hidden');
 
-function resetScanner() {
-    isProcessing = false;
-    document.getElementById('reader').classList.remove('hidden');
-    document.getElementById('result').classList.add('hidden');
-    document.getElementById('success-msg').classList.add('hidden');
-    document.getElementById('error-msg').classList.add('hidden');
-    
-    // Resume scanning
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.resume();
+        // Resume scanning
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.resume();
+        }
     }
-}
 
-function playSound(type) {
-    // Create audio context for beep sounds
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    if (type === 'success') {
-        oscillator.frequency.value = 800;
-        gainNode.gain.value = 0.3;
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.2);
-    } else {
-        oscillator.frequency.value = 200;
-        gainNode.gain.value = 0.3;
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
+    function playSound(type) {
+        // Create audio context for beep sounds
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        if (type === 'success') {
+            oscillator.frequency.value = 800;
+            gainNode.gain.value = 0.3;
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } else {
+            oscillator.frequency.value = 200;
+            gainNode.gain.value = 0.3;
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
     }
-}
 
-// Initialize scanner on page load
-document.addEventListener('DOMContentLoaded', function() {
-    html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { 
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0
-        },
-        false
-    );
-    html5QrcodeScanner.render(onScanSuccess);
-});
+    // Initialize scanner on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        // Calculate responsive QR box size
+        const viewportWidth = window.innerWidth;
+        const qrBoxSize = Math.min(250, Math.floor(viewportWidth * 0.7));
+
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            {
+                fps: 10,
+                qrbox: { width: qrBoxSize, height: qrBoxSize },
+                aspectRatio: 1.0
+            },
+            false
+        );
+        html5QrcodeScanner.render(onScanSuccess);
+    });
 </script>
 {% endblock %}

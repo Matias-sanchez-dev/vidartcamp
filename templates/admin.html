@@ -7,69 +7,80 @@
     <div class="hidden sm:block text-sm opacity-90">
         {{ admin.username }}
     </div>
-    <a href="/admin/logout" class="rounded-lg px-3 py-2 text-sm font-semibold bg-white/10 hover:bg-white/15 text-white transition">Cerrar sesión</a>
+    <a href="/admin/logout"
+        class="rounded-lg px-3 py-2 text-sm font-semibold bg-white/10 hover:bg-white/15 text-white transition">Cerrar
+        sesión</a>
 </div>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
     <div class="bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="md:flex">
-            <aside class="md:w-64 bg-gray-900 text-gray-100">
-                <div class="p-6 border-b border-gray-800">
-                    <div class="text-xl font-bold">Administración</div>
+        <div class="flex flex-col md:flex-row">
+            <aside class="md:w-64 lg:w-72 bg-gray-900 text-gray-100">
+                <div class="p-4 sm:p-6 border-b border-gray-800">
+                    <div class="text-lg sm:text-xl font-bold">Administración</div>
                     <div class="text-xs text-gray-400 mt-1">Gestión Vidartcamp</div>
                 </div>
 
-                <nav class="p-3 space-y-1">
-                    <a href="/admin?tab=dashboard{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}" class="block px-4 py-3 rounded-md hover:bg-gray-800 transition {% if active_tab == 'dashboard' %}bg-gray-800{% endif %}">
+                <nav class="p-2 sm:p-3 space-y-1">
+                    <a href="/admin?tab=dashboard{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}"
+                        class="block px-3 sm:px-4 py-2 sm:py-3 rounded-md text-sm hover:bg-gray-800 transition {% if active_tab == 'dashboard' %}bg-gray-800{% endif %}">
                         Dashboard
                     </a>
-                    <a href="/admin?tab=torneos{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}" class="block px-4 py-3 rounded-md hover:bg-gray-800 transition {% if active_tab == 'torneos' %}bg-gray-800{% endif %}">
+                    <a href="/admin?tab=torneos{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}"
+                        class="block px-3 sm:px-4 py-2 sm:py-3 rounded-md text-sm hover:bg-gray-800 transition {% if active_tab == 'torneos' %}bg-gray-800{% endif %}">
                         Torneos
                     </a>
-                    <a href="/admin?tab=equipos{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}" class="block px-4 py-3 rounded-md hover:bg-gray-800 transition {% if active_tab == 'equipos' %}bg-gray-800{% endif %}">
+                    <a href="/admin?tab=equipos{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}"
+                        class="block px-3 sm:px-4 py-2 sm:py-3 rounded-md text-sm hover:bg-gray-800 transition {% if active_tab == 'equipos' %}bg-gray-800{% endif %}">
                         Equipos
                     </a>
-                    <a href="/admin?tab=jugadores{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}" class="block px-4 py-3 rounded-md hover:bg-gray-800 transition {% if active_tab == 'jugadores' %}bg-gray-800{% endif %}">
+                    <a href="/admin?tab=jugadores{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}"
+                        class="block px-3 sm:px-4 py-2 sm:py-3 rounded-md text-sm hover:bg-gray-800 transition {% if active_tab == 'jugadores' %}bg-gray-800{% endif %}">
                         Jugadores
                     </a>
-                    <a href="/admin?tab=partidos{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}" class="block px-4 py-3 rounded-md hover:bg-gray-800 transition {% if active_tab == 'partidos' %}bg-gray-800{% endif %}">
+                    <a href="/admin?tab=partidos{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}"
+                        class="block px-3 sm:px-4 py-2 sm:py-3 rounded-md text-sm hover:bg-gray-800 transition {% if active_tab == 'partidos' %}bg-gray-800{% endif %}">
                         Partidos
                     </a>
                 </nav>
             </aside>
 
-            <section class="flex-1 p-6 bg-gray-50">
-                <div class="flex items-start justify-between gap-4 mb-6">
+            <section class="flex-1 p-3 sm:p-6 bg-gray-50">
+                <div class="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Panel de Administración</h2>
-                        <p class="text-gray-600 text-sm mt-1">Gestioná equipos, jugadores y partidos.</p>
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Panel de Administración</h2>
+                        <p class="text-gray-600 text-xs sm:text-sm mt-1">Gestioná equipos, jugadores y partidos.</p>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-                    <form method="GET" action="/admin" class="flex flex-col md:flex-row md:items-end gap-3">
+                <div class="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
+                    <form method="GET" action="/admin" class="flex flex-col gap-3">
                         <input type="hidden" name="tab" value="{{ active_tab }}">
                         <div class="flex-1">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2" for="torneo_id">Torneo seleccionado</label>
-                            <select id="torneo_id" name="torneo_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-2"
+                                for="torneo_id">Torneo seleccionado</label>
+                            <select id="torneo_id" name="torneo_id"
+                                class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                                 <option value="">(Sin seleccionar)</option>
                                 {% for t in torneos %}
-                                <option value="{{ t.id }}" {% if torneo_seleccionado and t.id == torneo_seleccionado.id %}selected{% endif %}>
+                                <option value="{{ t.id }}" {% if torneo_seleccionado and t.id==torneo_seleccionado.id
+                                    %}selected{% endif %}>
                                     {{ t.nombre }}{% if t.activo %} (ACTIVO){% endif %}
                                 </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div>
-                            <button type="submit" class="bg-gray-900 text-white px-5 py-3 rounded-lg font-semibold hover:bg-gray-800 transition">
+                        <div class="flex gap-2 sm:gap-3 flex-wrap">
+                            <button type="submit"
+                                class="flex-1 sm:flex-none bg-gray-900 text-white px-4 sm:px-5 py-2 sm:py-3 rounded-lg text-sm font-semibold hover:bg-gray-800 transition">
                                 Cambiar
                             </button>
-                        </div>
-                        <div class="md:ml-auto flex items-center gap-3">
-                            <a class="text-sm text-blue-700 hover:underline" href="/tabla">Ver tabla</a>
-                            <a class="text-sm text-blue-700 hover:underline" href="/fixture">Ver fixture</a>
+                            <a class="text-xs sm:text-sm text-blue-700 hover:underline self-center" href="/tabla">Ver
+                                tabla</a>
+                            <a class="text-xs sm:text-sm text-blue-700 hover:underline self-center" href="/fixture">Ver
+                                fixture</a>
                         </div>
                     </form>
                 </div>
@@ -87,22 +98,30 @@
                         <form method="POST" action="/admin/torneos">
                             <div class="mb-4">
                                 <label class="block text-gray-700 font-semibold mb-2" for="nombre_torneo">Nombre</label>
-                                <input id="nombre_torneo" name="nombre" type="text" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nombre del torneo">
+                                <input id="nombre_torneo" name="nombre" type="text" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Nombre del torneo">
                             </div>
 
                             <div class="mb-4">
-                                <label class="block text-gray-700 font-semibold mb-2" for="desc_torneo">Descripción</label>
-                                <textarea id="desc_torneo" name="descripcion" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="(opcional)"></textarea>
+                                <label class="block text-gray-700 font-semibold mb-2"
+                                    for="desc_torneo">Descripción</label>
+                                <textarea id="desc_torneo" name="descripcion" rows="3"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="(opcional)"></textarea>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label class="block text-gray-700 font-semibold mb-2" for="fi">Inicio</label>
-                                    <input id="fi" name="fecha_inicio" type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ hoy.isoformat() }}">
+                                    <input id="fi" name="fecha_inicio" type="date"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value="{{ hoy.isoformat() }}">
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 font-semibold mb-2" for="ff">Fin</label>
-                                    <input id="ff" name="fecha_fin" type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <input id="ff" name="fecha_fin" type="date"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 </div>
                             </div>
 
@@ -117,7 +136,8 @@
                                 </label>
                             </div>
 
-                            <button type="submit" class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                            <button type="submit"
+                                class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
                                 Crear
                             </button>
                         </form>
@@ -134,18 +154,23 @@
                                 <div class="flex items-start justify-between gap-3">
                                     <div>
                                         <div class="font-bold text-gray-900">{{ t.nombre }}</div>
-                                        <div class="text-xs text-gray-600 mt-1">ID: {{ t.id }}{% if t.activo %} | ACTIVO{% endif %}{% if t.mostrar_publico %} | Público{% else %} | Oculto{% endif %}</div>
+                                        <div class="text-xs text-gray-600 mt-1">ID: {{ t.id }}{% if t.activo %} |
+                                            ACTIVO{% endif %}{% if t.mostrar_publico %} | Público{% else %} | Oculto{%
+                                            endif %}</div>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <form method="POST" action="/admin/torneos/activar" class="inline">
                                             <input type="hidden" name="torneo_id" value="{{ t.id }}">
-                                            <button type="submit" class="bg-gray-900 text-white px-3 py-2 rounded font-semibold hover:bg-gray-800 transition">Activar</button>
+                                            <button type="submit"
+                                                class="bg-gray-900 text-white px-3 py-2 rounded font-semibold hover:bg-gray-800 transition">Activar</button>
                                         </form>
                                         <form method="POST" action="/admin/torneos/publico" class="inline">
                                             <input type="hidden" name="torneo_id" value="{{ t.id }}">
-                                            <button type="submit" class="bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded font-semibold hover:bg-gray-100 transition">Público</button>
+                                            <button type="submit"
+                                                class="bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded font-semibold hover:bg-gray-100 transition">Público</button>
                                         </form>
-                                        <a href="/admin?tab=torneos&torneo_id={{ t.id }}" class="bg-blue-600 text-white px-3 py-2 rounded font-semibold hover:bg-blue-700 transition">Seleccionar</a>
+                                        <a href="/admin?tab=torneos&torneo_id={{ t.id }}"
+                                            class="bg-blue-600 text-white px-3 py-2 rounded font-semibold hover:bg-blue-700 transition">Seleccionar</a>
                                     </div>
                                 </div>
                             </div>
@@ -159,7 +184,8 @@
                     <div class="flex items-center justify-between gap-4 mb-4">
                         <h3 class="text-lg font-bold text-gray-900">Asignar equipos al torneo</h3>
                         <div class="text-sm text-gray-600">
-                            {% if torneo_seleccionado %}Seleccionado: <span class="font-semibold">{{ torneo_seleccionado.nombre }}</span>{% else %}Seleccioná un torneo arriba{% endif %}
+                            {% if torneo_seleccionado %}Seleccionado: <span class="font-semibold">{{
+                                torneo_seleccionado.nombre }}</span>{% else %}Seleccioná un torneo arriba{% endif %}
                         </div>
                     </div>
 
@@ -171,14 +197,17 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
                             {% for e in equipos %}
-                            <label class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm">
-                                <input type="checkbox" name="equipo_ids" value="{{ e.id }}" class="h-4 w-4" {% if e.torneo_id == torneo_seleccionado.id %}checked{% endif %}>
+                            <label
+                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm">
+                                <input type="checkbox" name="equipo_ids" value="{{ e.id }}" class="h-4 w-4" {% if
+                                    e.torneo_id==torneo_seleccionado.id %}checked{% endif %}>
                                 <span class="font-semibold text-gray-900">{{ e.nombre }}</span>
                             </label>
                             {% endfor %}
                         </div>
 
-                        <button type="submit" class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <button type="submit"
+                            class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
                             Guardar asignación
                         </button>
                     </form>
@@ -248,19 +277,12 @@
                         <form method="POST" action="/admin/equipos">
                             <div class="mb-4">
                                 <label class="block text-gray-700 font-semibold mb-2" for="nombre">Nombre</label>
-                                <input
-                                    id="nombre"
-                                    name="nombre"
-                                    type="text"
-                                    required
+                                <input id="nombre" name="nombre" type="text" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Nombre del equipo"
-                                >
+                                    placeholder="Nombre del equipo">
                             </div>
-                            <button
-                                type="submit"
-                                class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-                            >
+                            <button type="submit"
+                                class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
                                 Guardar
                             </button>
                         </form>
@@ -290,37 +312,24 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Inscribir jugador</h3>
                         <form method="POST" action="/admin/jugadores">
                             <div class="mb-4">
-                                <label class="block text-gray-700 font-semibold mb-2" for="nombre_completo">Nombre</label>
-                                <input
-                                    id="nombre_completo"
-                                    name="nombre_completo"
-                                    type="text"
-                                    required
+                                <label class="block text-gray-700 font-semibold mb-2"
+                                    for="nombre_completo">Nombre</label>
+                                <input id="nombre_completo" name="nombre_completo" type="text" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Nombre y apellido"
-                                >
+                                    placeholder="Nombre y apellido">
                             </div>
 
                             <div class="mb-4">
                                 <label class="block text-gray-700 font-semibold mb-2" for="dni">DNI</label>
-                                <input
-                                    id="dni"
-                                    name="dni"
-                                    type="text"
-                                    required
+                                <input id="dni" name="dni" type="text" required
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="DNI"
-                                >
+                                    placeholder="DNI">
                             </div>
 
                             <div class="mb-4">
                                 <label class="block text-gray-700 font-semibold mb-2" for="equipo_id">Equipo</label>
-                                <select
-                                    id="equipo_id"
-                                    name="equipo_id"
-                                    required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                >
+                                <select id="equipo_id" name="equipo_id" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                                     <option value="" disabled selected>Seleccionar equipo</option>
                                     {% for equipo in equipos %}
                                     <option value="{{ equipo.id }}">{{ equipo.nombre }}</option>
@@ -328,10 +337,8 @@
                                 </select>
                             </div>
 
-                            <button
-                                type="submit"
-                                class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-                            >
+                            <button type="submit"
+                                class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
                                 Inscribir
                             </button>
                         </form>
@@ -368,101 +375,83 @@
                         <div class="border border-gray-200 rounded-lg overflow-hidden">
                             <div class="bg-gray-100 px-4 py-3 flex items-center justify-between">
                                 <div class="font-bold text-gray-900">{{ item.equipo.nombre }}</div>
-                                <div class="text-xs text-gray-600">ID: {{ item.equipo.id }} | Jugadores: {{ item.jugadores|length }}</div>
+                                <div class="text-xs text-gray-600">ID: {{ item.equipo.id }} | Jugadores: {{
+                                    item.jugadores|length }}</div>
                             </div>
 
                             {% if item.jugadores|length == 0 %}
                             <div class="px-4 py-4 text-sm text-gray-600">Sin jugadores activos.</div>
                             {% else %}
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm">
+                            <div class="overflow-x-auto -mx-3 sm:mx-0">
+                                <table class="w-full text-xs sm:text-sm">
                                     <thead>
                                         <tr class="text-left text-gray-500 border-b">
-                                            <th class="py-2 px-3 sticky left-0 bg-white z-10">Acciones</th>
-                                            <th class="py-2 px-3">Nombre</th>
-                                            <th class="py-2 px-3">DNI</th>
-                                            <th class="py-2 px-3">Equipo</th>
-                                            <th class="py-2 px-3">Teléfono</th>
-                                            <th class="py-2 px-3">Email</th>
+                                            <th class="py-2 px-2 sm:px-3 sticky left-0 bg-white z-10 min-w-[140px]">
+                                                Acciones</th>
+                                            <th class="py-2 px-2 sm:px-3">Nombre</th>
+                                            <th class="py-2 px-2 sm:px-3">DNI</th>
+                                            <th class="py-2 px-2 sm:px-3">Equipo</th>
+                                            <th class="py-2 px-2 sm:px-3 hidden md:table-cell">Teléfono</th>
+                                            <th class="py-2 px-2 sm:px-3 hidden lg:table-cell">Email</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for jugador in item.jugadores %}
                                         <tr class="border-b last:border-b-0 align-top">
-                                            <td class="py-3 px-3 sticky left-0 bg-white z-10">
-                                                <div class="flex items-center gap-2 min-w-[170px]">
-                                                    <form id="edit-jugador-{{ jugador.id }}" method="POST" action="/admin/jugadores/editar" class="inline">
+                                            <td class="py-2 sm:py-3 px-2 sm:px-3 sticky left-0 bg-white z-10">
+                                                <div class="flex items-center gap-1 sm:gap-2">
+                                                    <form id="edit-jugador-{{ jugador.id }}" method="POST"
+                                                        action="/admin/jugadores/editar" class="inline">
                                                         <input type="hidden" name="jugador_id" value="{{ jugador.id }}">
-                                                        <button
-                                                            type="submit"
-                                                            class="bg-blue-600 text-white px-3 py-2 rounded font-semibold hover:bg-blue-700 transition"
-                                                        >
+                                                        <button type="submit"
+                                                            class="bg-blue-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap">
                                                             Guardar
                                                         </button>
                                                     </form>
 
-                                                    <form method="POST" action="/admin/jugadores/borrar" class="inline" onsubmit="return confirm('¿Eliminar a este jugador de la lista?');">
+                                                    <form method="POST" action="/admin/jugadores/borrar" class="inline"
+                                                        onsubmit="return confirm('¿Eliminar a este jugador de la lista?');">
                                                         <input type="hidden" name="jugador_id" value="{{ jugador.id }}">
-                                                        <button
-                                                            type="submit"
-                                                            class="bg-red-600 text-white px-3 py-2 rounded font-semibold hover:bg-red-700 transition"
-                                                        >
+                                                        <button type="submit"
+                                                            class="bg-red-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm font-semibold hover:bg-red-700 transition whitespace-nowrap">
                                                             Borrar
                                                         </button>
                                                     </form>
                                                 </div>
                                             </td>
-                                            <td class="py-3 px-3">
-                                                <input
-                                                    form="edit-jugador-{{ jugador.id }}"
-                                                    type="text"
-                                                    name="nombre_completo"
-                                                    value="{{ jugador.nombre_completo }}"
-                                                    class="w-full min-w-[180px] px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    required
-                                                >
+                                            <td class="py-2 sm:py-3 px-2 sm:px-3">
+                                                <input form="edit-jugador-{{ jugador.id }}" type="text"
+                                                    name="nombre_completo" value="{{ jugador.nombre_completo }}"
+                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    required>
                                             </td>
-                                            <td class="py-3 px-3">
-                                                <input
-                                                    form="edit-jugador-{{ jugador.id }}"
-                                                    type="text"
-                                                    name="dni"
+                                            <td class="py-2 sm:py-3 px-2 sm:px-3">
+                                                <input form="edit-jugador-{{ jugador.id }}" type="text" name="dni"
                                                     value="{{ jugador.dni }}"
-                                                    class="w-full min-w-[120px] px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    required
-                                                >
+                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    required>
                                             </td>
-                                            <td class="py-3 px-3">
-                                                <select
-                                                    form="edit-jugador-{{ jugador.id }}"
-                                                    name="equipo_id"
-                                                    class="w-full min-w-[160px] px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                                    required
-                                                >
+                                            <td class="py-2 sm:py-3 px-2 sm:px-3">
+                                                <select form="edit-jugador-{{ jugador.id }}" name="equipo_id"
+                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                                    required>
                                                     {% for equipo in equipos %}
-                                                    <option value="{{ equipo.id }}" {% if equipo.id == jugador.equipo_id %}selected{% endif %}>{{ equipo.nombre }}</option>
+                                                    <option value="{{ equipo.id }}" {% if equipo.id==jugador.equipo_id
+                                                        %}selected{% endif %}>{{ equipo.nombre }}</option>
                                                     {% endfor %}
                                                 </select>
                                             </td>
-                                            <td class="py-3 px-3">
-                                                <input
-                                                    form="edit-jugador-{{ jugador.id }}"
-                                                    type="text"
-                                                    name="telefono"
+                                            <td class="py-2 sm:py-3 px-2 sm:px-3 hidden md:table-cell">
+                                                <input form="edit-jugador-{{ jugador.id }}" type="text" name="telefono"
                                                     value="{{ jugador.telefono or '' }}"
-                                                    class="w-full min-w-[140px] px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    placeholder="-"
-                                                >
+                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="-">
                                             </td>
-                                            <td class="py-3 px-3">
-                                                <input
-                                                    form="edit-jugador-{{ jugador.id }}"
-                                                    type="email"
-                                                    name="email"
+                                            <td class="py-2 sm:py-3 px-2 sm:px-3 hidden lg:table-cell">
+                                                <input form="edit-jugador-{{ jugador.id }}" type="email" name="email"
                                                     value="{{ jugador.email or '' }}"
-                                                    class="w-full min-w-[200px] px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    placeholder="-"
-                                                >
+                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="-">
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -483,133 +472,125 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Crear partido</h3>
                         {% if not torneo_seleccionado %}
                         <div class="text-sm text-gray-600 mb-4">Seleccioná un torneo arriba para crear partidos.</div>
-                        {% elif equipos_torneo|length < 2 %}
-                        <div class="text-sm text-gray-600 mb-4">Asigná al menos 2 equipos al torneo para cargar partidos.</div>
-                        {% endif %}
-                        <form method="POST" action="/admin/partidos">
-                            <input type="hidden" name="torneo_id" value="{{ torneo_seleccionado.id if torneo_seleccionado else '' }}">
-                            <div class="mb-4">
-                                <label class="block text-gray-700 font-semibold mb-2" for="fecha">Fecha</label>
-                                <input
-                                    id="fecha"
-                                    name="fecha"
-                                    type="date"
-                                    required
-                                    value="{{ hoy.isoformat() }}"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block text-gray-700 font-semibold mb-2" for="equipo_local_id">Local</label>
-                                <select
-                                    id="equipo_local_id"
-                                    name="equipo_local_id"
-                                    required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                >
-                                    <option value="" disabled selected>Seleccionar local</option>
-                                    {% for equipo in equipos_torneo %}
-                                    <option value="{{ equipo.id }}">{{ equipo.nombre }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block text-gray-700 font-semibold mb-2" for="equipo_visitante_id">Visitante</label>
-                                <select
-                                    id="equipo_visitante_id"
-                                    name="equipo_visitante_id"
-                                    required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                >
-                                    <option value="" disabled selected>Seleccionar visitante</option>
-                                    {% for equipo in equipos_torneo %}
-                                    <option value="{{ equipo.id }}">{{ equipo.nombre }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block text-gray-700 font-semibold mb-2" for="hora">Hora</label>
-                                <input
-                                    id="hora"
-                                    name="hora"
-                                    type="time"
-                                    required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-gray-700 font-semibold mb-2" for="jornada">Jornada</label>
-                                    <input id="jornada" name="jornada" type="number" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="(opcional)">
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700 font-semibold mb-2" for="cancha">Cancha</label>
-                                    <input id="cancha" name="cancha" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="(opcional)">
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-                            >
-                                Crear
-                            </button>
-                        </form>
+                        {% elif equipos_torneo|length < 2 %} <div class="text-sm text-gray-600 mb-4">Asigná al menos 2
+                            equipos al torneo para cargar partidos.
                     </div>
-
-                    <div class="bg-white rounded-lg border border-gray-200 p-5">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Partidos del torneo</h3>
-                        {% if not torneo_seleccionado %}
-                        <div class="text-gray-600 text-sm">Seleccioná un torneo arriba.</div>
-                        {% elif partidos_torneo|length == 0 %}
-                        <div class="text-gray-600 text-sm">No hay partidos cargados para este torneo.</div>
-                        {% else %}
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead>
-                                    <tr class="text-left text-gray-500 border-b">
-                                        <th class="py-2 pr-3">Jornada</th>
-                                        <th class="py-2 pr-3">Fecha</th>
-                                        <th class="py-2 pr-3">Hora</th>
-                                        <th class="py-2 pr-3">Local</th>
-                                        <th class="py-2 pr-3">Visitante</th>
-                                        <th class="py-2 pr-3">Resultado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for partido in partidos_torneo %}
-                                    <tr class="border-b last:border-b-0">
-                                        <td class="py-2 pr-3">{{ partido.jornada or '-' }}</td>
-                                        <td class="py-2 pr-3">{{ partido.fecha.strftime("%Y-%m-%d") }}</td>
-                                        <td class="py-2 pr-3 font-semibold">{{ partido.hora.strftime("%H:%M") }}</td>
-                                        <td class="py-2 pr-3">{{ partido.equipo_local.nombre }}</td>
-                                        <td class="py-2 pr-3">{{ partido.equipo_visitante.nombre }}</td>
-                                        <td class="py-2 pr-3">
-                                            <form method="POST" action="/admin/partidos/resultado" class="flex items-center gap-2">
-                                                <input type="hidden" name="partido_id" value="{{ partido.id }}">
-                                                <input type="number" name="goles_local" value="{{ partido.goles_local if partido.goles_local is not none else '' }}" class="w-16 px-2 py-1 border border-gray-300 rounded" min="0" required>
-                                                <span class="text-gray-600">-</span>
-                                                <input type="number" name="goles_visitante" value="{{ partido.goles_visitante if partido.goles_visitante is not none else '' }}" class="w-16 px-2 py-1 border border-gray-300 rounded" min="0" required>
-                                                <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded font-semibold hover:bg-blue-700 transition">
-                                                    Guardar
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    {% endif %}
+                    <form method="POST" action="/admin/partidos">
+                        <input type="hidden" name="torneo_id"
+                            value="{{ torneo_seleccionado.id if torneo_seleccionado else '' }}">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2" for="fecha">Fecha</label>
+                            <input id="fecha" name="fecha" type="date" required value="{{ hoy.isoformat() }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        {% endif %}
-                    </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2" for="equipo_local_id">Local</label>
+                            <select id="equipo_local_id" name="equipo_local_id" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="" disabled selected>Seleccionar local</option>
+                                {% for equipo in equipos_torneo %}
+                                <option value="{{ equipo.id }}">{{ equipo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2"
+                                for="equipo_visitante_id">Visitante</label>
+                            <select id="equipo_visitante_id" name="equipo_visitante_id" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="" disabled selected>Seleccionar visitante</option>
+                                {% for equipo in equipos_torneo %}
+                                <option value="{{ equipo.id }}">{{ equipo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 font-semibold mb-2" for="hora">Hora</label>
+                            <input id="hora" name="hora" type="time" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2" for="jornada">Jornada</label>
+                                <input id="jornada" name="jornada" type="number"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="(opcional)">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2" for="cancha">Cancha</label>
+                                <input id="cancha" name="cancha" type="text"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="(opcional)">
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                            class="bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                            Crear
+                        </button>
+                    </form>
                 </div>
-                {% endif %}
-            </section>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-5">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Partidos del torneo</h3>
+                    {% if not torneo_seleccionado %}
+                    <div class="text-gray-600 text-sm">Seleccioná un torneo arriba.</div>
+                    {% elif partidos_torneo|length == 0 %}
+                    <div class="text-gray-600 text-sm">No hay partidos cargados para este torneo.</div>
+                    {% else %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-gray-500 border-b">
+                                    <th class="py-2 pr-3">Jornada</th>
+                                    <th class="py-2 pr-3">Fecha</th>
+                                    <th class="py-2 pr-3">Hora</th>
+                                    <th class="py-2 pr-3">Local</th>
+                                    <th class="py-2 pr-3">Visitante</th>
+                                    <th class="py-2 pr-3">Resultado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for partido in partidos_torneo %}
+                                <tr class="border-b last:border-b-0">
+                                    <td class="py-2 pr-3">{{ partido.jornada or '-' }}</td>
+                                    <td class="py-2 pr-3">{{ partido.fecha.strftime("%Y-%m-%d") }}</td>
+                                    <td class="py-2 pr-3 font-semibold">{{ partido.hora.strftime("%H:%M") }}</td>
+                                    <td class="py-2 pr-3">{{ partido.equipo_local.nombre }}</td>
+                                    <td class="py-2 pr-3">{{ partido.equipo_visitante.nombre }}</td>
+                                    <td class="py-2 pr-3">
+                                        <form method="POST" action="/admin/partidos/resultado"
+                                            class="flex items-center gap-2">
+                                            <input type="hidden" name="partido_id" value="{{ partido.id }}">
+                                            <input type="number" name="goles_local"
+                                                value="{{ partido.goles_local if partido.goles_local is not none else '' }}"
+                                                class="w-16 px-2 py-1 border border-gray-300 rounded" min="0" required>
+                                            <span class="text-gray-600">-</span>
+                                            <input type="number" name="goles_visitante"
+                                                value="{{ partido.goles_visitante if partido.goles_visitante is not none else '' }}"
+                                                class="w-16 px-2 py-1 border border-gray-300 rounded" min="0" required>
+                                            <button type="submit"
+                                                class="bg-blue-600 text-white px-3 py-1 rounded font-semibold hover:bg-blue-700 transition">
+                                                Guardar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
         </div>
+        {% endif %}
+        </section>
     </div>
+</div>
 </div>
 {% endblock %}
