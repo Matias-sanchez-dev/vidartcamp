@@ -66,11 +66,16 @@
         if (isProcessing) return;
         isProcessing = true;
 
-        // Stop scanning
+        // Pausar el escáner visualmente
         html5QrcodeScanner.pause(true);
 
-        // Validate QR
+        // Validar el QR en el backend
         validarQR(decodedText);
+    }
+
+    function onScanFailure(error) {
+        // Esta función se ejecuta si el escaneo falla (puedes dejarla vacía para no llenar la consola)
+        // console.warn(`Code scan error = ${error}`);
     }
 
     async function validarQR(token) {
@@ -85,12 +90,12 @@
 
             const data = await response.json();
 
-            // Hide scanner
+            // Ocultar el lector
             document.getElementById('reader').classList.add('hidden');
             document.getElementById('result').classList.remove('hidden');
 
             if (data.status === 'ok') {
-                // Show success
+                // Mostrar éxito
                 document.getElementById('success-msg').classList.remove('hidden');
                 document.getElementById('error-msg').classList.add('hidden');
                 document.getElementById('player-info').innerHTML = `
@@ -98,20 +103,15 @@
                 <p class="mb-2"><strong>Equipo:</strong> ${data.equipo}</p>
                 <p><strong>DNI:</strong> ${data.dni}</p>
             `;
-
-                // Play success sound (optional)
                 playSound('success');
             } else {
-                // Show error
+                // Mostrar error del backend
                 document.getElementById('error-msg').classList.remove('hidden');
                 document.getElementById('success-msg').classList.add('hidden');
                 document.getElementById('error-info').innerHTML = `<p>${data.mensaje}</p>`;
-
-                // Play error sound (optional)
                 playSound('error');
             }
         } catch (error) {
-            // Show error
             document.getElementById('error-msg').classList.remove('hidden');
             document.getElementById('success-msg').classList.add('hidden');
             document.getElementById('error-info').innerHTML = `<p>Error de conexión: ${error.message}</p>`;
@@ -126,50 +126,63 @@
         document.getElementById('success-msg').classList.add('hidden');
         document.getElementById('error-msg').classList.add('hidden');
 
-        // Resume scanning
+        // Reanudar el escáner
         if (html5QrcodeScanner) {
             html5QrcodeScanner.resume();
         }
     }
 
     function playSound(type) {
-        // Create audio context for beep sounds
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
 
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
 
-        if (type === 'success') {
-            oscillator.frequency.value = 800;
-            gainNode.gain.value = 0.3;
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.2);
-        } else {
-            oscillator.frequency.value = 200;
-            gainNode.gain.value = 0.3;
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.5);
+            if (type === 'success') {
+                oscillator.frequency.value = 800;
+                gainNode.gain.value = 0.3;
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } else {
+                oscillator.frequency.value = 200;
+                gainNode.gain.value = 0.3;
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+        } catch (e) {
+            console.log("Audio no soportado o bloqueado");
         }
     }
 
-    // Initialize scanner on page load
+    // Inicialización del escáner
     document.addEventListener('DOMContentLoaded', function () {
-        // Calculate responsive QR box size
+        // Calcular tamaño responsivo
         const viewportWidth = window.innerWidth;
-        const qrBoxSize = Math.min(250, Math.floor(viewportWidth * 0.7));
+
+        // Hacemos el cuadro un poco más chico en celular para que sea fácil enfocar
+        const qrBoxSize = Math.min(250, Math.floor(viewportWidth * 0.6));
+
+        const config = {
+            fps: 10,
+            qrbox: { width: qrBoxSize, height: qrBoxSize },
+            aspectRatio: 1.0,
+            // ESTA ES LA CLAVE PARA CELULARES:
+            videoConstraints: {
+                facingMode: "environment" // Fuerza la cámara trasera
+            }
+        };
 
         html5QrcodeScanner = new Html5QrcodeScanner(
             "reader",
-            {
-                fps: 10,
-                qrbox: { width: qrBoxSize, height: qrBoxSize },
-                aspectRatio: 1.0
-            },
-            false
+            config,
+            /* verbose= */ false
         );
-        html5QrcodeScanner.render(onScanSuccess);
+
+        // Renderizado con manejo de errores de permiso
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     });
 </script>
 {% endblock %}
