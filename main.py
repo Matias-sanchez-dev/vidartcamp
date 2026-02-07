@@ -563,6 +563,18 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
     total_equipos = db.query(Equipo).filter(Equipo.activo == True).count()
 
     torneos = db.query(Torneo).order_by(Torneo.id.desc()).all()
+    
+    # Calcular estadísticas para cada torneo
+    torneos_con_stats = []
+    for t in torneos:
+        equipos_count = db.query(Equipo).filter(Equipo.torneo_id == t.id).count()
+        partidos_count = db.query(Partido).filter(Partido.torneo_id == t.id).count()
+        torneos_con_stats.append({
+            "torneo": t,
+            "equipos_count": equipos_count,
+            "partidos_count": partidos_count
+        })
+    
     torneo_activo = db.query(Torneo).filter(Torneo.activo == True).first()
 
     torneo_id_raw = request.query_params.get("torneo_id")
@@ -613,6 +625,7 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         "admin": admin,
         "hoy": hoy,
         "torneos": torneos,
+        "torneos_con_stats": torneos_con_stats,
         "torneo_activo": torneo_activo,
         "torneo_seleccionado": torneo_seleccionado,
         "total_jugadores": total_jugadores,
@@ -802,6 +815,40 @@ async def admin_toggle_torneo_publico(
 
     msg = urllib.parse.quote("Visibilidad actualizada")
     return RedirectResponse(url=f"/admin?tab=torneos&torneo_id={torneo.id}&ok={msg}", status_code=302)
+
+
+@app.post("/admin/torneos/eliminar")
+async def admin_eliminar_torneo(
+    request: Request,
+    torneo_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    
+    torneo = db.query(Torneo).filter(Torneo.id == torneo_id).first()
+    if not torneo:
+        msg = urllib.parse.quote("Torneo no encontrado")
+        return RedirectResponse(url=f"/admin?tab=torneos&error={msg}", status_code=302)
+    
+    # Verificar si tiene equipos asignados
+    equipos_count = db.query(Equipo).filter(Equipo.torneo_id == torneo_id).count()
+    partidos_count = db.query(Partido).filter(Partido.torneo_id == torneo_id).count()
+    
+    if equipos_count > 0 or partidos_count > 0:
+        msg = urllib.parse.quote(
+            f"No se puede eliminar '{torneo.nombre}': tiene {equipos_count} equipos y {partidos_count} partidos asignados. Desasignarlos primero."
+        )
+        return RedirectResponse(url=f"/admin?tab=torneos&error={msg}", status_code=302)
+    
+    # Eliminar torneo
+    nombre_torneo = torneo.nombre
+    db.delete(torneo)
+    db.commit()
+    
+    msg = urllib.parse.quote(f"Torneo '{nombre_torneo}' eliminado exitosamente")
+    return RedirectResponse(url="/admin?tab=torneos&ok={msg}", status_code=302)
 
 
 @app.post("/admin/torneos/asignar-equipos")

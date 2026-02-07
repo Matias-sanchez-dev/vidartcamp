@@ -56,12 +56,12 @@
                 </div>
 
                 <div class="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
-                    <form method="GET" action="/admin" class="flex flex-col gap-3">
+                    <form method="GET" action="/admin" id="torneoForm" class="flex flex-col gap-3">
                         <input type="hidden" name="tab" value="{{ active_tab }}">
                         <div class="flex-1">
                             <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-2"
                                 for="torneo_id">Torneo seleccionado</label>
-                            <select id="torneo_id" name="torneo_id"
+                            <select id="torneo_id" name="torneo_id" onchange="this.form.submit()"
                                 class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                                 <option value="">(Sin seleccionar)</option>
                                 {% for t in torneos %}
@@ -73,10 +73,6 @@
                             </select>
                         </div>
                         <div class="flex gap-2 sm:gap-3 flex-wrap">
-                            <button type="submit"
-                                class="flex-1 sm:flex-none bg-gray-900 text-white px-4 sm:px-5 py-2 sm:py-3 rounded-lg text-sm font-semibold hover:bg-gray-800 transition">
-                                Cambiar
-                            </button>
                             <a class="text-xs sm:text-sm text-blue-700 hover:underline self-center" href="/tabla">Ver
                                 tabla</a>
                             <a class="text-xs sm:text-sm text-blue-700 hover:underline self-center" href="/fixture">Ver
@@ -145,32 +141,70 @@
 
                     <div class="bg-white rounded-lg border border-gray-200 p-5">
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Torneos</h3>
-                        {% if torneos|length == 0 %}
+                        {% if torneos_con_stats|length == 0 %}
                         <div class="text-gray-600 text-sm">No hay torneos.</div>
                         {% else %}
                         <div class="space-y-3">
-                            {% for t in torneos %}
+                            {% for item in torneos_con_stats %}
+                            {% set t = item.torneo %}
                             <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                <div class="flex items-start justify-between gap-3">
+                                <div class="flex flex-col gap-3">
                                     <div>
                                         <div class="font-bold text-gray-900">{{ t.nombre }}</div>
-                                        <div class="text-xs text-gray-600 mt-1">ID: {{ t.id }}{% if t.activo %} |
-                                            ACTIVO{% endif %}{% if t.mostrar_publico %} | Público{% else %} | Oculto{%
-                                            endif %}</div>
+                                        <div class="text-xs text-gray-600 mt-1">
+                                            ID: {{ t.id }} |
+                                            {% if t.activo %}<span class="text-green-700 font-semibold">ACTIVO</span>{%
+                                            else %}<span class="text-gray-500">Inactivo</span>{% endif %} |
+                                            {% if t.mostrar_publico %}<span class="text-blue-700">Público</span>{% else
+                                            %}<span class="text-gray-500">Oculto</span>{% endif %}
+                                        </div>
+                                        <div class="text-xs text-gray-600 mt-1">
+                                            📊 Equipos: {{ item.equipos_count }} | Partidos: {{ item.partidos_count }}
+                                            {% if t.fecha_inicio %} | Inicio: {{ t.fecha_inicio.strftime('%d/%m/%Y')
+                                            }}{% endif %}
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <!-- Toggle Activar/Desactivar -->
+                                        {% if t.activo %}
+                                        <span
+                                            class="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded font-semibold">✓
+                                            Activo</span>
+                                        {% else %}
                                         <form method="POST" action="/admin/torneos/activar" class="inline">
                                             <input type="hidden" name="torneo_id" value="{{ t.id }}">
                                             <button type="submit"
-                                                class="bg-gray-900 text-white px-3 py-2 rounded font-semibold hover:bg-gray-800 transition">Activar</button>
+                                                class="text-xs bg-green-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-green-700 transition">Activar</button>
                                         </form>
+                                        {% endif %}
+
+                                        <!-- Toggle Público/Oculto -->
                                         <form method="POST" action="/admin/torneos/publico" class="inline">
                                             <input type="hidden" name="torneo_id" value="{{ t.id }}">
+                                            {% if t.mostrar_publico %}
                                             <button type="submit"
-                                                class="bg-white border border-gray-300 text-gray-900 px-3 py-2 rounded font-semibold hover:bg-gray-100 transition">Público</button>
+                                                class="text-xs bg-blue-100 text-blue-800 px-3 py-1.5 rounded font-semibold hover:bg-blue-200 transition">👁️
+                                                Público</button>
+                                            {% else %}
+                                            <button type="submit"
+                                                class="text-xs bg-gray-300 text-gray-700 px-3 py-1.5 rounded font-semibold hover:bg-gray-400 transition">🔒
+                                                Oculto</button>
+                                            {% endif %}
                                         </form>
+
+                                        <!-- Seleccionar -->
                                         <a href="/admin?tab=torneos&torneo_id={{ t.id }}"
-                                            class="bg-blue-600 text-white px-3 py-2 rounded font-semibold hover:bg-blue-700 transition">Seleccionar</a>
+                                            class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-blue-700 transition">Seleccionar</a>
+
+                                        <!-- Eliminar -->
+                                        <form method="POST" action="/admin/torneos/eliminar" class="inline"
+                                            onsubmit="return confirm('¿Eliminar torneo \" {{ t.nombre }}\"? Esta acción
+                                            no se puede deshacer.')">
+                                            <input type="hidden" name="torneo_id" value="{{ t.id }}">
+                                            <button type="submit"
+                                                class="text-xs bg-red-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-red-700 transition">🗑️
+                                                Eliminar</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
