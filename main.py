@@ -832,23 +832,19 @@ async def admin_eliminar_torneo(
         msg = urllib.parse.quote("Torneo no encontrado")
         return RedirectResponse(url=f"/admin?tab=torneos&error={msg}", status_code=302)
     
-    # Verificar si tiene equipos asignados
-    equipos_count = db.query(Equipo).filter(Equipo.torneo_id == torneo_id).count()
-    partidos_count = db.query(Partido).filter(Partido.torneo_id == torneo_id).count()
+    # Eliminar partidos asociados
+    db.query(Partido).filter(Partido.torneo_id == torneo_id).delete()
     
-    if equipos_count > 0 or partidos_count > 0:
-        msg = urllib.parse.quote(
-            f"No se puede eliminar '{torneo.nombre}': tiene {equipos_count} equipos y {partidos_count} partidos asignados. Desasignarlos primero."
-        )
-        return RedirectResponse(url=f"/admin?tab=torneos&error={msg}", status_code=302)
+    # Desasignar equipos (poner torneo_id = NULL)
+    db.query(Equipo).filter(Equipo.torneo_id == torneo_id).update({Equipo.torneo_id: None})
     
     # Eliminar torneo
     nombre_torneo = torneo.nombre
     db.delete(torneo)
     db.commit()
     
-    msg = urllib.parse.quote(f"Torneo '{nombre_torneo}' eliminado exitosamente")
-    return RedirectResponse(url="/admin?tab=torneos&ok={msg}", status_code=302)
+    msg = urllib.parse.quote(f"Torneo '{nombre_torneo}' eliminado (incluyendo partidos asociados)")
+    return RedirectResponse(url=f"/admin?tab=torneos&ok={msg}", status_code=302)
 
 
 @app.post("/admin/torneos/asignar-equipos")

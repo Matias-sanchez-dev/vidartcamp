@@ -198,8 +198,9 @@
 
                                         <!-- Eliminar -->
                                         <form method="POST" action="/admin/torneos/eliminar" class="inline"
-                                            onsubmit="return confirm('¿Eliminar torneo \" {{ t.nombre }}\"? Esta acción
-                                            no se puede deshacer.')">
+                                            onsubmit="return confirm('¿Eliminar torneo \" {{ t.nombre }}\"? ADVERTENCIA:
+                                            Se borrarán todos los partidos y se desasignarán los equipos. Esta acción no
+                                            se puede deshacer.')">
                                             <input type="hidden" name="torneo_id" value="{{ t.id }}">
                                             <button type="submit"
                                                 class="text-xs bg-red-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-red-700 transition">🗑️
