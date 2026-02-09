@@ -198,9 +198,7 @@
 
                                         <!-- Eliminar -->
                                         <form method="POST" action="/admin/torneos/eliminar" class="inline"
-                                            onsubmit="return confirm('¿Eliminar torneo \" {{ t.nombre }}\"? ADVERTENCIA:
-                                            Se borrarán todos los partidos y se desasignarán los equipos. Esta acción no
-                                            se puede deshacer.')">
+                                            onsubmit="return confirm('¿Eliminar torneo &quot;{{ t.nombre }}&quot;? ADVERTENCIA: Se borrarán todos los partidos y se desasignarán los equipos. Esta acción no se puede deshacer.')">
                                             <input type="hidden" name="torneo_id" value="{{ t.id }}">
                                             <button type="submit"
                                                 class="text-xs bg-red-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-red-700 transition">🗑️
@@ -328,11 +326,31 @@
                         {% if equipos|length == 0 %}
                         <div class="text-gray-600 text-sm">No hay equipos.</div>
                         {% else %}
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div class="space-y-3">
                             {% for equipo in equipos %}
-                            <div class="bg-gray-50 border border-gray-200 rounded px-3 py-2">
-                                <div class="font-semibold text-gray-900">{{ equipo.nombre }}</div>
-                                <div class="text-xs text-gray-600">ID: {{ equipo.id }}</div>
+                            <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                <div
+                                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                    <div>
+                                        <div class="font-semibold text-gray-900">{{ equipo.nombre }}</div>
+                                        <div class="text-xs text-gray-600">
+                                            ID: {{ equipo.id }}
+                                            {% if equipo.torneo %}
+                                            | Torneo: {{ equipo.torneo.nombre }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <form method="POST" action="/admin/equipos/eliminar" class="inline"
+                                            onsubmit="return confirm('¿Eliminar equipo &quot;{{ equipo.nombre }}&quot;?\n\nADVERTENCIA: También se eliminarán todos los jugadores asociados a este equipo.\n\nEsta acción no se puede deshacer.')">
+                                            <input type="hidden" name="equipo_id" value="{{ equipo.id }}">
+                                            <button type="submit"
+                                                class="text-xs bg-red-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-red-700 transition">
+                                                🗑️ Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                             {% endfor %}
                         </div>

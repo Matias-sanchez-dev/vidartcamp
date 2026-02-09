@@ -987,6 +987,42 @@ async def admin_crear_equipo(
     return RedirectResponse(url=f"/admin?tab=equipos&ok={msg}", status_code=302)
 
 
+@app.post("/admin/equipos/eliminar")
+async def admin_eliminar_equipo(
+    request: Request,
+    equipo_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Eliminar equipo y todos sus jugadores asociados"""
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    
+    equipo = db.query(Equipo).filter(Equipo.id == equipo_id, Equipo.activo == True).first()
+    if not equipo:
+        msg = urllib.parse.quote("Equipo no encontrado")
+        return RedirectResponse(url=f"/admin?tab=equipos&error={msg}", status_code=302)
+    
+    # Contar jugadores asociados activos
+    jugadores_count = db.query(Jugador).filter(
+        Jugador.equipo_id == equipo_id,
+        Jugador.activo == True
+    ).count()
+    
+    # Marcar jugadores como inactivos (soft delete)
+    db.query(Jugador).filter(Jugador.equipo_id == equipo_id).update({Jugador.activo: False})
+    
+    # Marcar equipo como inactivo (soft delete)
+    nombre_equipo = equipo.nombre
+    equipo.activo = False
+    db.commit()
+    
+    msg = urllib.parse.quote(
+        f"Equipo '{nombre_equipo}' eliminado ({jugadores_count} jugador(es) también eliminado(s))"
+    )
+    return RedirectResponse(url=f"/admin?tab=equipos&ok={msg}", status_code=302)
+
+
 @app.post("/admin/jugadores")
 async def admin_crear_jugador(
     request: Request,
