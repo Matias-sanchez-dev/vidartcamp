@@ -416,6 +416,68 @@ async def logout():
     return response
 
 
+@app.get("/cambiar-password", response_class=HTMLResponse)
+async def cambiar_password_page(request: Request, db: Session = Depends(get_db)):
+    """Página para cambiar contraseña (solo jugadores logueados)"""
+    jugador = get_current_user(request, db)
+    if not jugador:
+        return RedirectResponse(url="/login", status_code=302)
+    
+    return templates.TemplateResponse("cambiar_password.html", {
+        "request": request,
+        "jugador": jugador
+    })
+
+
+@app.post("/cambiar-password")
+async def cambiar_password(
+    request: Request,
+    password_actual: str = Form(...),
+    password_nueva: str = Form(...),
+    password_confirmacion: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Procesar cambio de contraseña"""
+    jugador = get_current_user(request, db)
+    if not jugador:
+        return RedirectResponse(url="/login", status_code=302)
+    
+    # Validar contraseña actual
+    if not verify_password(password_actual, jugador.password_hash):
+        return templates.TemplateResponse("cambiar_password.html", {
+            "request": request,
+            "jugador": jugador,
+            "error": "La contraseña actual es incorrecta"
+        })
+    
+    # Validar que la nueva contraseña no esté vacía
+    if not password_nueva or not password_nueva.strip():
+        return templates.TemplateResponse("cambiar_password.html", {
+            "request": request,
+            "jugador": jugador,
+            "error": "La nueva contraseña no puede estar vacía"
+        })
+    
+    # Validar que las contraseñas coincidan
+    if password_nueva != password_confirmacion:
+        return templates.TemplateResponse("cambiar_password.html", {
+            "request": request,
+            "jugador": jugador,
+            "error": "Las contraseñas nuevas no coinciden"
+        })
+    
+    # Actualizar contraseña (hasheada)
+    jugador.password_hash = get_password_hash(password_nueva)
+    db.commit()
+    
+    # Redirigir al dashboard con mensaje de éxito
+    return templates.TemplateResponse("cambiar_password.html", {
+        "request": request,
+        "jugador": jugador,
+        "ok": "✅ Contraseña cambiada exitosamente"
+    })
+
+
 # ==================== QR GENERATION AND VALIDATION ====================
 
 @app.post("/api/generar-qr")
