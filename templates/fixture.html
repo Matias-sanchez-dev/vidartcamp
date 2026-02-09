@@ -35,42 +35,97 @@
                     <div class="text-base sm:text-lg font-extrabold text-slate-900">Jornada {{ jornada }}</div>
                     <div class="text-xs text-slate-600">{{ partidos|length }}</div>
                 </div>
-                <div class="overflow-x-auto -mx-4 sm:mx-0">
+
+                <!-- Vista móvil: Tarjetas (< 640px) -->
+                <div class="sm:hidden space-y-3 p-3">
+                    {% for p in partidos %}
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                        <!-- Hora y fecha -->
+                        <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-lg font-bold text-slate-900">{{ p.hora.strftime("%H:%M") }}</span>
+                            </div>
+                            <span class="text-xs text-slate-500">{{ p.fecha.strftime("%d/%m/%Y") }}</span>
+                        </div>
+
+                        <!-- Equipos -->
+                        <div class="space-y-2 mb-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-slate-900">{{ p.equipo_local.nombre }}</span>
+                                <span class="text-xs text-slate-500 ml-2">Local</span>
+                            </div>
+                            <div class="flex items-center justify-center">
+                                <span class="text-slate-400 font-bold">VS</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-slate-900">{{ p.equipo_visitante.nombre
+                                    }}</span>
+                                <span class="text-xs text-slate-500 ml-2">Visitante</span>
+                            </div>
+                        </div>
+
+                        <!-- Resultado y cancha -->
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                            <div>
+                                {% if p.finalizado and p.goles_local is not none and p.goles_visitante is not none %}
+                                <span
+                                    class="inline-flex items-center rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-1.5 text-sm font-extrabold">
+                                    {{ p.goles_local }} - {{ p.goles_visitante }}
+                                </span>
+                                {% else %}
+                                <span
+                                    class="inline-flex items-center rounded-lg bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1.5 text-xs font-semibold">
+                                    Por jugar
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if p.cancha %}
+                            <span class="text-xs text-slate-500">📍 {{ p.cancha }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Vista desktop: Tabla (≥ 640px) -->
+                <div class="hidden sm:block overflow-x-auto">
                     <table class="w-full text-xs sm:text-sm">
                         <thead>
                             <tr class="text-left text-slate-500 border-b bg-white">
-                                <th class="py-2 px-2 sm:py-3 sm:px-4 hidden sm:table-cell">Fecha</th>
-                                <th class="py-2 px-3 sm:py-3 sm:px-4 whitespace-nowrap" style="min-width: 60px;">Hora
-                                </th>
-                                <th class="py-2 px-2 sm:py-3 sm:px-4">Local</th>
-                                <th class="py-2 px-2 sm:py-3 sm:px-4">Visitante</th>
-                                <th class="py-2 px-2 sm:py-3 sm:px-4 hidden md:table-cell">Cancha</th>
-                                <th class="py-2 px-2 sm:py-3 sm:px-4">Resultado</th>
+                                <th class="py-3 px-4">Fecha</th>
+                                <th class="py-3 px-4">Hora</th>
+                                <th class="py-3 px-4">Local</th>
+                                <th class="py-3 px-4">Visitante</th>
+                                <th class="py-3 px-4 hidden md:table-cell">Cancha</th>
+                                <th class="py-3 px-4">Resultado</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for p in partidos %}
                             <tr class="border-b last:border-b-0 hover:bg-slate-50/60 transition">
-                                <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700 hidden sm:table-cell">{{
-                                    p.fecha.strftime("%Y-%m-%d") }}</td>
-                                <td class="py-2 px-3 sm:py-3 sm:px-4 font-bold text-slate-900 whitespace-nowrap"
-                                    style="min-width: 60px;">{{
+                                <td class="py-3 px-4 text-slate-700">{{ p.fecha.strftime("%Y-%m-%d") }}</td>
+                                <td class="py-3 px-4 font-bold text-slate-900 whitespace-nowrap">{{
                                     p.hora.strftime("%H:%M") }}</td>
-                                <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700">{{ p.equipo_local.nombre }}</td>
-                                <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700">{{ p.equipo_visitante.nombre }}
-                                </td>
-                                <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700 hidden md:table-cell">{{ p.cancha or
-                                    '-' }}</td>
-                                <td class="py-2 px-2 sm:py-3 sm:px-4">
+                                <td class="py-3 px-4 text-slate-700">{{ p.equipo_local.nombre }}</td>
+                                <td class="py-3 px-4 text-slate-700">{{ p.equipo_visitante.nombre }}</td>
+                                <td class="py-3 px-4 text-slate-700 hidden md:table-cell">{{ p.cancha or '-' }}</td>
+                                <td class="py-3 px-4">
                                     {% if p.finalizado and p.goles_local is not none and p.goles_visitante is not none
                                     %}
                                     <span
-                                        class="inline-flex items-center rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-xs font-extrabold whitespace-nowrap">{{
-                                        p.goles_local }} - {{ p.goles_visitante }}</span>
+                                        class="inline-flex items-center rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 px-2.5 py-1 text-xs font-extrabold whitespace-nowrap">
+                                        {{ p.goles_local }} - {{ p.goles_visitante }}
+                                    </span>
                                     {% else %}
                                     <span
-                                        class="inline-flex items-center rounded-lg bg-slate-50 text-slate-700 border border-slate-200 px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-xs font-semibold whitespace-nowrap">Por
-                                        jugar</span>
+                                        class="inline-flex items-center rounded-lg bg-slate-50 text-slate-700 border border-slate-200 px-2.5 py-1 text-xs font-semibold whitespace-nowrap">
+                                        Por jugar
+                                    </span>
                                     {% endif %}
                                 </td>
                             </tr>
