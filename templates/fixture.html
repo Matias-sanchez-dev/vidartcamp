@@ -40,7 +40,8 @@
                         <thead>
                             <tr class="text-left text-slate-500 border-b bg-white">
                                 <th class="py-2 px-2 sm:py-3 sm:px-4 hidden sm:table-cell">Fecha</th>
-                                <th class="py-2 px-2 sm:py-3 sm:px-4">Hora</th>
+                                <th class="py-2 px-3 sm:py-3 sm:px-4 whitespace-nowrap" style="min-width: 60px;">Hora
+                                </th>
                                 <th class="py-2 px-2 sm:py-3 sm:px-4">Local</th>
                                 <th class="py-2 px-2 sm:py-3 sm:px-4">Visitante</th>
                                 <th class="py-2 px-2 sm:py-3 sm:px-4 hidden md:table-cell">Cancha</th>
@@ -52,7 +53,8 @@
                             <tr class="border-b last:border-b-0 hover:bg-slate-50/60 transition">
                                 <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700 hidden sm:table-cell">{{
                                     p.fecha.strftime("%Y-%m-%d") }}</td>
-                                <td class="py-2 px-2 sm:py-3 sm:px-4 font-semibold text-slate-900">{{
+                                <td class="py-2 px-3 sm:py-3 sm:px-4 font-bold text-slate-900 whitespace-nowrap"
+                                    style="min-width: 60px;">{{
                                     p.hora.strftime("%H:%M") }}</td>
                                 <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700">{{ p.equipo_local.nombre }}</td>
                                 <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700">{{ p.equipo_visitante.nombre }}
