@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
@@ -19,6 +20,9 @@ from models import Usuario, Torneo, Equipo, Jugador, Partido, SesionQR
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Vidartcamp Control de Acceso v2")
+
+# Static files (for images, CSS, etc.)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Templates
 templates = Jinja2Templates(directory="templates")
