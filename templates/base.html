@@ -20,6 +20,77 @@
             },
         }
     </script>
+    <style>
+        /* Estilos para menú hamburguesa responsive */
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .hamburger-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Media query para móvil (< 768px) */
+        @media (max-width: 767px) {
+            .hamburger-btn {
+                display: block;
+            }
+
+            .nav-links {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: linear-gradient(to right, rgb(2, 6, 23), rgb(15, 23, 42), rgb(2, 6, 23));
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+                padding: 0;
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            .nav-links.show {
+                max-height: 500px;
+                opacity: 1;
+                padding: 0.5rem 0;
+            }
+
+            .nav-links a {
+                width: 100%;
+                padding: 0.75rem 1rem;
+                text-align: left;
+                border-radius: 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .nav-links a:last-child {
+                border-bottom: none;
+            }
+
+            .nav-links a:hover {
+                background-color: rgba(255, 255, 255, 0.15);
+            }
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 
@@ -27,7 +98,7 @@
     <nav
         class="sticky top-0 z-50 border-b border-white/10 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white shadow-sm">
         <div class="mx-auto max-w-6xl px-2 sm:px-4">
-            <div class="flex items-center justify-between py-3 sm:py-4">
+            <div class="flex items-center justify-between py-3 sm:py-4 relative">
                 <a href="/" class="flex items-center gap-2 sm:gap-3">
                     <img src="/static/images/logo.png" alt="Vidartcamp Logo" class="h-8 w-auto sm:h-10 object-contain">
                     <div class="leading-tight">
@@ -35,7 +106,17 @@
                         <div class="text-xs text-white/70 hidden xs:block">Control de acceso</div>
                     </div>
                 </a>
-                <div class="flex items-center gap-1 sm:gap-2">
+
+                <!-- Botón hamburguesa (solo visible en móvil) -->
+                <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle menu">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+
+                <!-- Enlaces de navegación -->
+                <div class="nav-links" id="nav-links">
                     {% block nav_links %}{% endblock %}
                 </div>
             </div>
@@ -52,6 +133,35 @@
             <p class="hidden sm:block">Sistema de Control de Acceso</p>
         </div>
     </footer>
+
+    <!-- JavaScript para toggle del menú hamburguesa -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const navLinks = document.getElementById('nav-links');
+
+            if (hamburgerBtn && navLinks) {
+                hamburgerBtn.addEventListener('click', function () {
+                    navLinks.classList.toggle('show');
+                });
+
+                // Cerrar menú al hacer click en un enlace (mejor UX en móvil)
+                const links = navLinks.querySelectorAll('a');
+                links.forEach(link => {
+                    link.addEventListener('click', function () {
+                        navLinks.classList.remove('show');
+                    });
+                });
+
+                // Cerrar menú al hacer click fuera
+                document.addEventListener('click', function (event) {
+                    if (!navLinks.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+                        navLinks.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
 
     {% block extra_scripts %}{% endblock %}
 </body>
