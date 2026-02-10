@@ -27,65 +27,60 @@
         {% if partidos_por_jornada|length == 0 %}
         <div class="text-gray-600">No hay partidos cargados para este torneo.</div>
         {% else %}
-        <div class="space-y-6">
+        <div class="space-y-8">
             {% for jornada, partidos in partidos_por_jornada.items() %}
-            <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white">
+            <div class="border-2 border-slate-200 rounded-2xl overflow-hidden bg-white shadow-md">
                 <div
-                    class="bg-slate-50 px-3 sm:px-5 py-3 sm:py-4 flex items-center justify-between border-b border-slate-200">
-                    <div class="text-base sm:text-lg font-extrabold text-slate-900">Jornada {{ jornada }}</div>
-                    <div class="text-xs text-slate-600">{{ partidos|length }}</div>
+                    class="bg-gradient-to-r from-slate-900 to-slate-800 px-4 sm:px-5 py-4 flex items-center justify-between">
+                    <div class="text-base sm:text-lg font-extrabold text-white">Jornada {{ jornada }}</div>
+                    <div class="text-sm text-white/80 font-semibold">{{ partidos|length }} partido{{ 's' if
+                        partidos|length != 1 else '' }}</div>
                 </div>
 
                 <!-- Vista móvil: Tarjetas (< 640px) -->
-                <div class="sm:hidden space-y-3 p-3">
+                <div class="sm:hidden space-y-3 p-4">
                     {% for p in partidos %}
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 hover:shadow-sm transition">
                         <!-- Hora y fecha -->
-                        <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
+                        <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
+                                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                                <span class="text-lg font-bold text-slate-900">{{ p.hora.strftime("%H:%M") }}</span>
+                                <span class="text-xl font-extrabold text-slate-900">{{ p.hora.strftime("%H:%M")
+                                    }}</span>
                             </div>
-                            <span class="text-xs text-slate-500">{{ p.fecha.strftime("%d/%m/%Y") }}</span>
+                            <span class="text-xs text-slate-600 font-medium">{{ p.fecha.strftime("%d/%m/%Y") }}</span>
                         </div>
 
                         <!-- Equipos -->
-                        <div class="space-y-2 mb-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm font-semibold text-slate-900">{{ p.equipo_local.nombre }}</span>
-                                <span class="text-xs text-slate-500 ml-2">Local</span>
+                        <div class="bg-white rounded-lg p-3 mb-3 space-y-2">
+                            <div class="text-base font-bold text-slate-900">{{ p.equipo_local.nombre }}</div>
+                            <div class="flex items-center justify-center py-1">
+                                <span class="text-slate-400 font-bold text-sm">VS</span>
                             </div>
-                            <div class="flex items-center justify-center">
-                                <span class="text-slate-400 font-bold">VS</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm font-semibold text-slate-900">{{ p.equipo_visitante.nombre
-                                    }}</span>
-                                <span class="text-xs text-slate-500 ml-2">Visitante</span>
-                            </div>
+                            <div class="text-base font-bold text-slate-900">{{ p.equipo_visitante.nombre }}</div>
                         </div>
 
                         <!-- Resultado y cancha -->
-                        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                        <div class="flex items-center justify-between">
                             <div>
                                 {% if p.finalizado and p.goles_local is not none and p.goles_visitante is not none %}
                                 <span
-                                    class="inline-flex items-center rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-1.5 text-sm font-extrabold">
+                                    class="inline-flex items-center rounded-lg bg-emerald-500 text-white px-4 py-2 text-base font-extrabold shadow-sm">
                                     {{ p.goles_local }} - {{ p.goles_visitante }}
                                 </span>
                                 {% else %}
                                 <span
-                                    class="inline-flex items-center rounded-lg bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1.5 text-xs font-semibold">
+                                    class="inline-flex items-center rounded-lg bg-slate-200 text-slate-700 px-4 py-2 text-sm font-bold">
                                     Por jugar
                                 </span>
                                 {% endif %}
                             </div>
                             {% if p.cancha %}
-                            <span class="text-xs text-slate-500">📍 {{ p.cancha }}</span>
+                            <span class="text-xs text-slate-600 font-medium">📍 {{ p.cancha }}</span>
                             {% endif %}
                         </div>
                     </div>
