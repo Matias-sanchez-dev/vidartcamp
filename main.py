@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, Form, status
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi import FastAPI, Depends, HTTPException, Request, Form, UploadFile, File, status
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, date, time as dt_time
 from typing import Optional, List
 import uuid
 import urllib.parse
+import io
 from sqlalchemy import desc
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -678,7 +679,7 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         equipos_con_jugadores.append({"equipo": equipo, "jugadores": jugadores_equipo})
 
     active_tab = request.query_params.get("tab", "dashboard")
-    if active_tab not in {"dashboard", "equipos", "jugadores", "partidos", "torneos"}:
+    if active_tab not in {"dashboard", "equipos", "jugadores", "partidos", "torneos", "carga_masiva"}:
         active_tab = "dashboard"
 
     ok_raw = request.query_params.get("ok")
@@ -1270,6 +1271,212 @@ async def admin_cargar_resultado(
     tid = partido.torneo_id
     torneo_qs = f"&torneo_id={tid}" if tid else ""
     return RedirectResponse(url=f"/admin?tab=partidos{torneo_qs}&ok={msg}", status_code=302)
+
+
+@app.get("/admin/carga-masiva/plantilla")
+async def admin_descargar_plantilla(request: Request, db: Session = Depends(get_db)):
+    """Descargar plantilla Excel de ejemplo para carga masiva"""
+    admin = get_current_admin(request, db)
+    if not admin:
+        return RedirectResponse(url="/admin/login", status_code=302)
+
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Jugadores"
+
+    # Estilos
+    header_font = Font(name="Arial", bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
+    header_align = Alignment(horizontal="center", vertical="center")
+    thin_border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+
+    # Encabezados
+    headers = ["Nombre", "Apellido", "DNI"]
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        cell.border = thin_border
+
+    # Filas de ejemplo
+    ejemplos = [
+        ("Juan", "Pérez", "12345678"),
+        ("María", "González", "87654321"),
+        ("Carlos", "López", "11223344"),
+    ]
+    example_font = Font(name="Arial", color="999999", italic=True, size=10)
+    for row, (nombre, apellido, dni) in enumerate(ejemplos, 2):
+        ws.cell(row=row, column=1, value=nombre).font = example_font
+        ws.cell(row=row, column=2, value=apellido).font = example_font
+        ws.cell(row=row, column=3, value=dni).font = example_font
+        for col in range(1, 4):
+            ws.cell(row=row, column=col).border = thin_border
+
+    # Ancho de columnas
+    ws.column_dimensions["A"].width = 20
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 18
+
+    # Hoja de instrucciones
+    ws_info = wb.create_sheet("Instrucciones")
+    instrucciones = [
+        "INSTRUCCIONES PARA CARGA MASIVA DE JUGADORES",
+        "",
+        "1. Completá la hoja 'Jugadores' con los datos de cada jugador.",
+        "2. Las columnas obligatorias son: Nombre, Apellido y DNI.",
+        "3. El DNI debe ser único para cada jugador.",
+        "4. Borrá las filas de ejemplo antes de cargar tus datos.",
+        "5. Al subir el archivo, seleccioná el equipo al que pertenecen los jugadores.",
+        "6. Si el equipo no existe, se creará automáticamente con el nombre que indiques.",
+        "7. La contraseña inicial de cada jugador será su DNI.",
+        "",
+        "IMPORTANTE: No modifiques los nombres de las columnas (Nombre, Apellido, DNI).",
+    ]
+    for i, line in enumerate(instrucciones, 1):
+        cell = ws_info.cell(row=i, column=1, value=line)
+        if i == 1:
+            cell.font = Font(name="Arial", bold=True, size=13, color="2563EB")
+        else:
+            cell.font = Font(name="Arial", size=11)
+    ws_info.column_dimensions["A"].width = 70
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=plantilla_jugadores_vidartcamp.xlsx"},
+    )
+
+
+@app.post("/admin/carga-masiva")
+async def admin_carga_masiva(
+    request: Request,
+    nombre_equipo: str = Form(""),
+    equipo_id: Optional[int] = Form(None),
+    archivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """Carga masiva de jugadores desde un archivo Excel (.xlsx)"""
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    # Validar extensión
+    if not archivo.filename or not archivo.filename.lower().endswith(".xlsx"):
+        msg = urllib.parse.quote("El archivo debe ser un Excel (.xlsx)")
+        return RedirectResponse(url=f"/admin?tab=carga_masiva&error={msg}", status_code=302)
+
+    # Leer archivo
+    import openpyxl
+    try:
+        contenido = await archivo.read()
+        wb = openpyxl.load_workbook(io.BytesIO(contenido))
+    except Exception:
+        msg = urllib.parse.quote("No se pudo leer el archivo Excel. Verificá que sea un .xlsx válido.")
+        return RedirectResponse(url=f"/admin?tab=carga_masiva&error={msg}", status_code=302)
+
+    ws = wb.active
+
+    # Detectar columnas por nombre en la primera fila
+    header_map = {}
+    for col in range(1, ws.max_column + 1):
+        val = ws.cell(row=1, column=col).value
+        if val:
+            header_map[str(val).strip().lower()] = col
+
+    col_nombre = header_map.get("nombre")
+    col_apellido = header_map.get("apellido")
+    col_dni = header_map.get("dni")
+
+    if not col_nombre or not col_dni:
+        msg = urllib.parse.quote("El archivo debe tener al menos las columnas 'Nombre' y 'DNI' en la primera fila.")
+        return RedirectResponse(url=f"/admin?tab=carga_masiva&error={msg}", status_code=302)
+
+    # Determinar equipo: usar existente o crear nuevo
+    nombre_equipo_limpio = (nombre_equipo or "").strip()
+    if equipo_id and equipo_id > 0:
+        equipo = db.query(Equipo).filter(Equipo.id == equipo_id, Equipo.activo == True).first()
+        if not equipo:
+            msg = urllib.parse.quote("El equipo seleccionado no existe o fue eliminado.")
+            return RedirectResponse(url=f"/admin?tab=carga_masiva&error={msg}", status_code=302)
+    elif nombre_equipo_limpio:
+        equipo = db.query(Equipo).filter(Equipo.nombre == nombre_equipo_limpio, Equipo.activo == True).first()
+        if not equipo:
+            torneo_activo = db.query(Torneo).filter(Torneo.activo == True).first()
+            equipo = Equipo(
+                nombre=nombre_equipo_limpio,
+                activo=True,
+                torneo_id=torneo_activo.id if torneo_activo else None,
+            )
+            db.add(equipo)
+            db.commit()
+            db.refresh(equipo)
+    else:
+        msg = urllib.parse.quote("Debés seleccionar un equipo existente o escribir un nombre para crear uno nuevo.")
+        return RedirectResponse(url=f"/admin?tab=carga_masiva&error={msg}", status_code=302)
+
+    # Procesar filas
+    jugadores_creados = 0
+    jugadores_duplicados = 0
+    errores_fila = []
+
+    for row in range(2, ws.max_row + 1):
+        nombre_val = ws.cell(row=row, column=col_nombre).value
+        apellido_val = ws.cell(row=row, column=col_apellido).value if col_apellido else ""
+        dni_val = ws.cell(row=row, column=col_dni).value
+
+        # Saltar filas vacías
+        if not nombre_val and not dni_val:
+            continue
+
+        nombre_str = str(nombre_val or "").strip()
+        apellido_str = str(apellido_val or "").strip()
+        dni_str = str(dni_val or "").strip().replace(".0", "").replace(".", "")
+
+        if not nombre_str or not dni_str:
+            errores_fila.append(f"Fila {row}: nombre o DNI vacío")
+            continue
+
+        nombre_completo = f"{nombre_str} {apellido_str}".strip()
+
+        # Verificar si ya existe
+        existe = db.query(Jugador).filter(Jugador.dni == dni_str).first()
+        if existe:
+            jugadores_duplicados += 1
+            continue
+
+        jugador = Jugador(
+            dni=dni_str,
+            nombre_completo=nombre_completo,
+            password_hash=get_password_hash(dni_str),
+            equipo_id=equipo.id,
+            activo=True,
+        )
+        db.add(jugador)
+        jugadores_creados += 1
+
+    db.commit()
+
+    # Construir mensaje de resultado
+    partes = [f"{jugadores_creados} jugador(es) cargado(s) al equipo '{equipo.nombre}'"]
+    if jugadores_duplicados:
+        partes.append(f"{jugadores_duplicados} omitido(s) por DNI duplicado")
+    if errores_fila:
+        partes.append(f"{len(errores_fila)} fila(s) con errores")
+    msg = urllib.parse.quote(" | ".join(partes))
+    return RedirectResponse(url=f"/admin?tab=carga_masiva&ok={msg}", status_code=302)
 
 
 @app.get("/admin/dashboard", response_class=HTMLResponse)

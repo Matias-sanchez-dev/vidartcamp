@@ -44,6 +44,11 @@
                         class="block px-3 sm:px-4 py-2 sm:py-3 rounded-md text-sm hover:bg-gray-800 transition {% if active_tab == 'partidos' %}bg-gray-800{% endif %}">
                         Partidos
                     </a>
+                    <div class="border-t border-gray-700 my-2"></div>
+                    <a href="/admin?tab=carga_masiva{% if torneo_seleccionado %}&torneo_id={{ torneo_seleccionado.id }}{% endif %}"
+                        class="block px-3 sm:px-4 py-2 sm:py-3 rounded-md text-sm hover:bg-gray-800 transition {% if active_tab == 'carga_masiva' %}bg-gray-800 text-emerald-400{% endif %}">
+                        Carga Masiva
+                    </a>
                 </nav>
             </aside>
 
@@ -519,6 +524,121 @@
                 </div>
                 {% endif %}
 
+                {% if active_tab == 'carga_masiva' %}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Formulario de carga -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-5">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900">Carga Masiva de Jugadores</h3>
+                                <p class="text-xs text-gray-500">Importá un equipo completo desde un archivo Excel</p>
+                            </div>
+                        </div>
+
+                        <form method="POST" action="/admin/carga-masiva" enctype="multipart/form-data" id="formCargaMasiva">
+                            <!-- Selección de equipo -->
+                            <div class="mb-4">
+                                <label class="block text-gray-700 font-semibold mb-2">Equipo</label>
+                                <div class="space-y-3">
+                                    <select id="carga_equipo_id" name="equipo_id"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                        onchange="toggleNuevoEquipo(this)">
+                                        <option value="0">-- Crear equipo nuevo --</option>
+                                        {% for equipo in equipos %}
+                                        <option value="{{ equipo.id }}">{{ equipo.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div id="nuevo_equipo_container">
+                                        <input id="nombre_equipo" name="nombre_equipo" type="text"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                            placeholder="Nombre del nuevo equipo">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Archivo Excel -->
+                            <div class="mb-5">
+                                <label class="block text-gray-700 font-semibold mb-2">Archivo Excel (.xlsx)</label>
+                                <div id="dropZone"
+                                    class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-emerald-400 hover:bg-emerald-50/50 transition-all cursor-pointer">
+                                    <input type="file" name="archivo" accept=".xlsx" required id="archivoInput"
+                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                    <div id="dropContent">
+                                        <svg class="w-10 h-10 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                                        </svg>
+                                        <p class="text-sm text-gray-600 font-medium">Arrastrá el archivo o hacé clic para seleccionar</p>
+                                        <p class="text-xs text-gray-400 mt-1">Solo archivos .xlsx</p>
+                                    </div>
+                                    <div id="fileSelected" class="hidden">
+                                        <svg class="w-10 h-10 text-emerald-500 mx-auto mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <p class="text-sm text-emerald-700 font-semibold" id="fileName"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="btnSubir"
+                                class="w-full bg-emerald-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                                Cargar jugadores
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Instrucciones y plantilla -->
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-lg border border-gray-200 p-5">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Descargar Plantilla</h3>
+                            <p class="text-sm text-gray-600 mb-4">
+                                Descargá la plantilla Excel con el formato correcto. Completala con los datos de los jugadores y subila desde el formulario.
+                            </p>
+                            <a href="/admin/carga-masiva/plantilla"
+                                class="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                Descargar plantilla .xlsx
+                            </a>
+                        </div>
+
+                        <div class="bg-white rounded-lg border border-gray-200 p-5">
+                            <h3 class="text-lg font-bold text-gray-900 mb-3">Instrucciones</h3>
+                            <div class="space-y-2 text-sm text-gray-700">
+                                <div class="flex items-start gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                                    <span class="text-emerald-600 font-bold mt-0.5">1.</span>
+                                    <span>Descargá la plantilla Excel y completala con <strong>Nombre</strong>, <strong>Apellido</strong> y <strong>DNI</strong> de cada jugador.</span>
+                                </div>
+                                <div class="flex items-start gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                                    <span class="text-emerald-600 font-bold mt-0.5">2.</span>
+                                    <span>Seleccioná un equipo existente o escribí el nombre de uno nuevo.</span>
+                                </div>
+                                <div class="flex items-start gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                                    <span class="text-emerald-600 font-bold mt-0.5">3.</span>
+                                    <span>Subí el archivo Excel y se crearán todos los jugadores automáticamente.</span>
+                                </div>
+                                <div class="flex items-start gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                                    <span class="text-emerald-600 font-bold mt-0.5">4.</span>
+                                    <span>Los jugadores con DNI ya existente se omiten (no se duplican).</span>
+                                </div>
+                                <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                    <span class="text-amber-600 font-bold mt-0.5">!</span>
+                                    <span>La contraseña inicial de cada jugador será su <strong>DNI</strong>.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if active_tab == 'partidos' %}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-5">
@@ -646,4 +766,58 @@
     </div>
 </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function toggleNuevoEquipo(select) {
+        var container = document.getElementById('nuevo_equipo_container');
+        var input = document.getElementById('nombre_equipo');
+        if (!container || !input) return;
+        if (select.value === '0') {
+            container.style.display = 'block';
+            input.required = true;
+        } else {
+            container.style.display = 'none';
+            input.required = false;
+            input.value = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var select = document.getElementById('carga_equipo_id');
+        if (select) toggleNuevoEquipo(select);
+
+        var archivoInput = document.getElementById('archivoInput');
+        if (archivoInput) {
+            archivoInput.addEventListener('change', function () {
+                var dropContent = document.getElementById('dropContent');
+                var fileSelected = document.getElementById('fileSelected');
+                var fileName = document.getElementById('fileName');
+                var dropZone = document.getElementById('dropZone');
+                if (this.files && this.files.length > 0) {
+                    dropContent.classList.add('hidden');
+                    fileSelected.classList.remove('hidden');
+                    fileName.textContent = this.files[0].name;
+                    dropZone.classList.remove('border-gray-300');
+                    dropZone.classList.add('border-emerald-400', 'bg-emerald-50/50');
+                } else {
+                    dropContent.classList.remove('hidden');
+                    fileSelected.classList.add('hidden');
+                    dropZone.classList.add('border-gray-300');
+                    dropZone.classList.remove('border-emerald-400', 'bg-emerald-50/50');
+                }
+            });
+        }
+
+        var form = document.getElementById('formCargaMasiva');
+        if (form) {
+            form.addEventListener('submit', function () {
+                var btn = document.getElementById('btnSubir');
+                btn.disabled = true;
+                btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Procesando...';
+            });
+        }
+    });
+</script>
 {% endblock %}
