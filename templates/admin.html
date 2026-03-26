@@ -171,17 +171,17 @@
                                     </div>
                                     <div class="flex flex-wrap items-center gap-2">
                                         <!-- Toggle Activar/Desactivar -->
-                                        {% if t.activo %}
-                                        <span
-                                            class="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded font-semibold">✓
-                                            Activo</span>
-                                        {% else %}
                                         <form method="POST" action="/admin/torneos/activar" class="inline">
                                             <input type="hidden" name="torneo_id" value="{{ t.id }}">
+                                            {% if t.activo %}
+                                            <button type="submit"
+                                                class="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded font-semibold hover:bg-red-100 hover:text-red-800 transition"
+                                                title="Clic para desactivar">✓ Activo</button>
+                                            {% else %}
                                             <button type="submit"
                                                 class="text-xs bg-green-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-green-700 transition">Activar</button>
+                                            {% endif %}
                                         </form>
-                                        {% endif %}
 
                                         <!-- Toggle Público/Oculto -->
                                         <form method="POST" action="/admin/torneos/publico" class="inline">

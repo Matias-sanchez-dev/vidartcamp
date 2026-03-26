@@ -272,28 +272,38 @@ async def home(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/tabla", response_class=HTMLResponse)
 async def tabla_posiciones(request: Request, db: Session = Depends(get_db)):
-    """Standings table (public if tournament is public; private for logged users in a tournament)"""
-    torneo = db.query(Torneo).filter(Torneo.activo == True, Torneo.mostrar_publico == True).first()
+    """Standings table - supports multiple active tournaments via ?torneo_id="""
+    torneos_publicos = db.query(Torneo).filter(
+        Torneo.activo == True, Torneo.mostrar_publico == True
+    ).order_by(Torneo.id.desc()).all()
+
+    torneo_id_raw = request.query_params.get("torneo_id")
+    torneo = None
+    if torneo_id_raw:
+        try:
+            torneo = db.query(Torneo).filter(
+                Torneo.id == int(torneo_id_raw),
+                Torneo.activo == True,
+                Torneo.mostrar_publico == True
+            ).first()
+        except ValueError:
+            pass
+
+    if not torneo and torneos_publicos:
+        torneo = torneos_publicos[0]
 
     if not torneo:
         jugador = get_current_user(request, db)
         if jugador and jugador.equipo and jugador.equipo.torneo_id:
             torneo = db.query(Torneo).filter(Torneo.id == jugador.equipo.torneo_id).first()
+            torneos_publicos = [torneo] if torneo else []
 
     if not torneo:
-        jugador = get_current_user(request, db)
-        if jugador and (not jugador.equipo or not jugador.equipo.torneo_id):
-            return templates.TemplateResponse("error.html", {
-                "request": request,
-                "mensaje": "Tu equipo no está asignado a ningún torneo"
-            })
-
         return templates.TemplateResponse("error.html", {
             "request": request,
             "mensaje": "No hay torneo activo en este momento"
         })
-    
-    # Get teams sorted by points
+
     equipos = db.query(Equipo).filter(
         Equipo.torneo_id == torneo.id,
         Equipo.activo == True
@@ -302,54 +312,65 @@ async def tabla_posiciones(request: Request, db: Session = Depends(get_db)):
         desc(Equipo.goles_favor - Equipo.goles_contra),
         Equipo.goles_favor.desc()
     ).all()
-    
+
     return templates.TemplateResponse("tabla.html", {
         "request": request,
         "torneo": torneo,
-        "equipos": equipos
+        "equipos": equipos,
+        "torneos_publicos": torneos_publicos,
     })
 
 
 @app.get("/fixture", response_class=HTMLResponse)
 async def fixture(request: Request, db: Session = Depends(get_db)):
-    """Fixture (public if tournament is public; private for logged users in a tournament)"""
-    torneo = db.query(Torneo).filter(Torneo.activo == True, Torneo.mostrar_publico == True).first()
+    """Fixture - supports multiple active tournaments via ?torneo_id="""
+    torneos_publicos = db.query(Torneo).filter(
+        Torneo.activo == True, Torneo.mostrar_publico == True
+    ).order_by(Torneo.id.desc()).all()
+
+    torneo_id_raw = request.query_params.get("torneo_id")
+    torneo = None
+    if torneo_id_raw:
+        try:
+            torneo = db.query(Torneo).filter(
+                Torneo.id == int(torneo_id_raw),
+                Torneo.activo == True,
+                Torneo.mostrar_publico == True
+            ).first()
+        except ValueError:
+            pass
+
+    if not torneo and torneos_publicos:
+        torneo = torneos_publicos[0]
 
     if not torneo:
         jugador = get_current_user(request, db)
         if jugador and jugador.equipo and jugador.equipo.torneo_id:
             torneo = db.query(Torneo).filter(Torneo.id == jugador.equipo.torneo_id).first()
+            torneos_publicos = [torneo] if torneo else []
 
     if not torneo:
-        jugador = get_current_user(request, db)
-        if jugador and (not jugador.equipo or not jugador.equipo.torneo_id):
-            return templates.TemplateResponse("error.html", {
-                "request": request,
-                "mensaje": "Tu equipo no está asignado a ningún torneo"
-            })
-
         return templates.TemplateResponse("error.html", {
             "request": request,
             "mensaje": "No hay torneo activo en este momento"
         })
-    
-    # Get matches grouped by jornada
+
     partidos = db.query(Partido).filter(
         Partido.torneo_id == torneo.id
     ).order_by(Partido.jornada, Partido.fecha, Partido.hora).all()
-    
-    # Group by jornada
+
     partidos_por_jornada = {}
     for partido in partidos:
         jornada = partido.jornada or 0
         if jornada not in partidos_por_jornada:
             partidos_por_jornada[jornada] = []
         partidos_por_jornada[jornada].append(partido)
-    
+
     return templates.TemplateResponse("fixture.html", {
         "request": request,
         "torneo": torneo,
-        "partidos_por_jornada": partidos_por_jornada
+        "partidos_por_jornada": partidos_por_jornada,
+        "torneos_publicos": torneos_publicos,
     })
 
 
@@ -819,7 +840,6 @@ async def admin_crear_torneo(
     db.refresh(torneo)
 
     if activar:
-        db.query(Torneo).update({Torneo.activo: False})
         torneo.activo = True
         db.commit()
 
@@ -848,11 +868,10 @@ async def admin_activar_torneo(
         msg = urllib.parse.quote("Torneo no encontrado")
         return RedirectResponse(url=f"/admin?tab=torneos&error={msg}", status_code=302)
 
-    db.query(Torneo).update({Torneo.activo: False})
-    torneo.activo = True
+    torneo.activo = not torneo.activo
     db.commit()
 
-    msg = urllib.parse.quote("Torneo activado")
+    msg = urllib.parse.quote("Torneo activado" if torneo.activo else "Torneo desactivado")
     return RedirectResponse(url=f"/admin?tab=torneos&torneo_id={torneo.id}&ok={msg}", status_code=302)
 
 
