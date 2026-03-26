@@ -1292,6 +1292,36 @@ async def admin_cargar_resultado(
     return RedirectResponse(url=f"/admin?tab=partidos{torneo_qs}&ok={msg}", status_code=302)
 
 
+@app.post("/admin/partidos/eliminar")
+async def admin_eliminar_partido(
+    request: Request,
+    partido_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    partido = db.query(Partido).filter(Partido.id == partido_id).first()
+    if not partido:
+        msg = urllib.parse.quote("Partido no encontrado")
+        return RedirectResponse(url=f"/admin?tab=partidos&error={msg}", status_code=302)
+
+    torneo_id = partido.torneo_id
+    era_finalizado = partido.finalizado
+
+    db.delete(partido)
+    db.commit()
+
+    if torneo_id and era_finalizado:
+        recalculate_torneo_positions(torneo_id, db)
+        db.commit()
+
+    msg = urllib.parse.quote("Partido eliminado")
+    torneo_qs = f"&torneo_id={torneo_id}" if torneo_id else ""
+    return RedirectResponse(url=f"/admin?tab=partidos{torneo_qs}&ok={msg}", status_code=302)
+
+
 @app.get("/admin/carga-masiva/plantilla")
 async def admin_descargar_plantilla(request: Request, db: Session = Depends(get_db)):
     """Descargar plantilla Excel de ejemplo para carga masiva"""
