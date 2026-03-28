@@ -1076,10 +1076,20 @@ async def admin_crear_jugador(
         msg = urllib.parse.quote("Equipo inválido")
         return RedirectResponse(url=f"/admin?tab=jugadores&error={msg}", status_code=302)
 
-    existe = db.query(Jugador).filter(Jugador.dni == dni_limpio).first()
-    if existe:
-        msg = urllib.parse.quote("Ya existe un jugador con ese DNI")
+    existe_activo = db.query(Jugador).filter(Jugador.dni == dni_limpio, Jugador.activo == True).first()
+    if existe_activo:
+        msg = urllib.parse.quote("Ya existe un jugador activo con ese DNI")
         return RedirectResponse(url=f"/admin?tab=jugadores&error={msg}", status_code=302)
+
+    existe_inactivo = db.query(Jugador).filter(Jugador.dni == dni_limpio, Jugador.activo == False).first()
+    if existe_inactivo:
+        existe_inactivo.nombre_completo = nombre_limpio
+        existe_inactivo.equipo_id = equipo.id
+        existe_inactivo.password_hash = get_password_hash(dni_limpio)
+        existe_inactivo.activo = True
+        db.commit()
+        msg = urllib.parse.quote("Jugador reactivado")
+        return RedirectResponse(url=f"/admin?tab=jugadores&ok={msg}", status_code=302)
 
     jugador = Jugador(
         dni=dni_limpio,
@@ -1136,9 +1146,9 @@ async def admin_editar_jugador(
         return RedirectResponse(url=f"/admin?tab=jugadores&error={msg}", status_code=302)
 
     if jugador.dni != dni_limpio:
-        existe = db.query(Jugador).filter(Jugador.dni == dni_limpio).first()
+        existe = db.query(Jugador).filter(Jugador.dni == dni_limpio, Jugador.activo == True).first()
         if existe:
-            msg = urllib.parse.quote("Ya existe un jugador con ese DNI")
+            msg = urllib.parse.quote("Ya existe un jugador activo con ese DNI")
             return RedirectResponse(url=f"/admin?tab=jugadores&error={msg}", status_code=302)
 
     jugador.nombre_completo = nombre_limpio
@@ -1500,10 +1510,21 @@ async def admin_carga_masiva(
 
         nombre_completo = f"{nombre_str} {apellido_str}".strip()
 
-        # Verificar si ya existe
-        existe = db.query(Jugador).filter(Jugador.dni == dni_str).first()
-        if existe:
+        # Verificar si ya existe activo
+        existe_activo = db.query(Jugador).filter(Jugador.dni == dni_str, Jugador.activo == True).first()
+        if existe_activo:
             jugadores_duplicados += 1
+            continue
+
+        # Si existe inactivo, reactivarlo
+        existe_inactivo = db.query(Jugador).filter(Jugador.dni == dni_str, Jugador.activo == False).first()
+        if existe_inactivo:
+            existe_inactivo.nombre_completo = nombre_completo
+            existe_inactivo.equipo_id = equipo.id
+            existe_inactivo.password_hash = get_password_hash(dni_str)
+            existe_inactivo.activo = True
+            db.commit()
+            jugadores_creados += 1
             continue
 
         jugador = Jugador(
