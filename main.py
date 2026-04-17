@@ -693,11 +693,11 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
 
     equipos_con_jugadores = []
     for equipo in equipos:
-        jugadores_equipo = db.query(Jugador).filter(
+        count = db.query(Jugador).filter(
             Jugador.equipo_id == equipo.id,
             Jugador.activo == True
-        ).order_by(Jugador.nombre_completo.asc()).all()
-        equipos_con_jugadores.append({"equipo": equipo, "jugadores": jugadores_equipo})
+        ).count()
+        equipos_con_jugadores.append({"equipo": equipo, "count": count})
 
     active_tab = request.query_params.get("tab", "dashboard")
     if active_tab not in {"dashboard", "equipos", "jugadores", "partidos", "torneos", "carga_masiva"}:
@@ -727,6 +727,31 @@ async def admin_panel(request: Request, db: Session = Depends(get_db)):
         "active_tab": active_tab,
         "ok": ok,
         "error": error,
+    })
+
+
+@app.get("/admin/jugadores/equipo/{equipo_id}", response_class=HTMLResponse)
+async def admin_jugadores_equipo_partial(equipo_id: int, request: Request, db: Session = Depends(get_db)):
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    equipo = db.query(Equipo).filter(Equipo.id == equipo_id, Equipo.activo == True).first()
+    if not equipo:
+        raise HTTPException(status_code=404, detail="Equipo no encontrado")
+
+    jugadores = db.query(Jugador).filter(
+        Jugador.equipo_id == equipo_id,
+        Jugador.activo == True
+    ).order_by(Jugador.nombre_completo.asc()).all()
+
+    equipos = db.query(Equipo).filter(Equipo.activo == True).order_by(Equipo.nombre.asc()).all()
+
+    return templates.TemplateResponse("admin_jugadores_partial.html", {
+        "request": request,
+        "equipo": equipo,
+        "jugadores": jugadores,
+        "equipos": equipos,
     })
 
 

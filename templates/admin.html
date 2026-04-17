@@ -422,101 +422,27 @@
                 <div class="bg-white rounded-lg border border-gray-200 p-5">
                     <div class="flex items-center justify-between gap-4 mb-4">
                         <h3 class="text-lg font-bold text-gray-900">Jugadores por equipo</h3>
-                        <div class="text-sm text-gray-600">Acciones: editar / borrar</div>
+                        <div class="text-sm text-gray-600">Clic en un equipo para ver sus jugadores</div>
                     </div>
 
                     {% if equipos_con_jugadores|length == 0 %}
                     <div class="text-gray-600 text-sm">No hay equipos para mostrar.</div>
                     {% else %}
-                    <div class="space-y-4">
+                    <div class="space-y-2" id="equipos-accordion">
                         {% for item in equipos_con_jugadores %}
                         <div class="border border-gray-200 rounded-lg overflow-hidden">
-                            <div class="bg-gray-100 px-4 py-3 flex items-center justify-between">
+                            <button type="button"
+                                class="w-full bg-gray-100 px-4 py-3 flex items-center justify-between hover:bg-gray-200 transition text-left"
+                                onclick="toggleEquipo({{ item.equipo.id }})">
                                 <div class="font-bold text-gray-900">{{ item.equipo.nombre }}</div>
-                                <div class="text-xs text-gray-600">ID: {{ item.equipo.id }} | Jugadores: {{
-                                    item.jugadores|length }}</div>
-                            </div>
-
-                            {% if item.jugadores|length == 0 %}
-                            <div class="px-4 py-4 text-sm text-gray-600">Sin jugadores activos.</div>
-                            {% else %}
-                            <div class="overflow-x-auto -mx-3 sm:mx-0">
-                                <table class="w-full text-xs sm:text-sm">
-                                    <thead>
-                                        <tr class="text-left text-gray-500 border-b">
-                                            <th class="py-2 px-2 sm:px-3 sticky left-0 bg-white z-10 min-w-[140px]">
-                                                Acciones</th>
-                                            <th class="py-2 px-2 sm:px-3">Nombre</th>
-                                            <th class="py-2 px-2 sm:px-3">DNI</th>
-                                            <th class="py-2 px-2 sm:px-3">Equipo</th>
-                                            <th class="py-2 px-2 sm:px-3 hidden md:table-cell">Teléfono</th>
-                                            <th class="py-2 px-2 sm:px-3 hidden lg:table-cell">Email</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for jugador in item.jugadores %}
-                                        <tr class="border-b last:border-b-0 align-top">
-                                            <td class="py-2 sm:py-3 px-2 sm:px-3 sticky left-0 bg-white z-10">
-                                                <div class="flex items-center gap-1 sm:gap-2">
-                                                    <form id="edit-jugador-{{ jugador.id }}" method="POST"
-                                                        action="/admin/jugadores/editar" class="inline">
-                                                        <input type="hidden" name="jugador_id" value="{{ jugador.id }}">
-                                                        <button type="submit"
-                                                            class="bg-blue-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap">
-                                                            Guardar
-                                                        </button>
-                                                    </form>
-
-                                                    <form method="POST" action="/admin/jugadores/borrar" class="inline"
-                                                        onsubmit="return confirm('¿Eliminar a este jugador de la lista?');">
-                                                        <input type="hidden" name="jugador_id" value="{{ jugador.id }}">
-                                                        <button type="submit"
-                                                            class="bg-red-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded text-xs sm:text-sm font-semibold hover:bg-red-700 transition whitespace-nowrap">
-                                                            Borrar
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                            <td class="py-2 sm:py-3 px-2 sm:px-3">
-                                                <input form="edit-jugador-{{ jugador.id }}" type="text"
-                                                    name="nombre_completo" value="{{ jugador.nombre_completo }}"
-                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    required>
-                                            </td>
-                                            <td class="py-2 sm:py-3 px-2 sm:px-3">
-                                                <input form="edit-jugador-{{ jugador.id }}" type="text" name="dni"
-                                                    value="{{ jugador.dni }}"
-                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    required>
-                                            </td>
-                                            <td class="py-2 sm:py-3 px-2 sm:px-3">
-                                                <select form="edit-jugador-{{ jugador.id }}" name="equipo_id"
-                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                                    required>
-                                                    {% for equipo in equipos %}
-                                                    <option value="{{ equipo.id }}" {% if equipo.id==jugador.equipo_id
-                                                        %}selected{% endif %}>{{ equipo.nombre }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </td>
-                                            <td class="py-2 sm:py-3 px-2 sm:px-3 hidden md:table-cell">
-                                                <input form="edit-jugador-{{ jugador.id }}" type="text" name="telefono"
-                                                    value="{{ jugador.telefono or '' }}"
-                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    placeholder="-">
-                                            </td>
-                                            <td class="py-2 sm:py-3 px-2 sm:px-3 hidden lg:table-cell">
-                                                <input form="edit-jugador-{{ jugador.id }}" type="email" name="email"
-                                                    value="{{ jugador.email or '' }}"
-                                                    class="w-full px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    placeholder="-">
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {% endif %}
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <span class="text-xs text-gray-600">{{ item.count }} jugador{{ 'es' if item.count != 1 else '' }}</span>
+                                    <svg class="w-4 h-4 text-gray-500 transition-transform duration-200" id="chevron-{{ item.equipo.id }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </button>
+                            <div id="jugadores-body-{{ item.equipo.id }}" class="hidden"></div>
                         </div>
                         {% endfor %}
                     </div>
@@ -781,6 +707,36 @@
 
 {% block extra_scripts %}
 <script>
+    function toggleEquipo(equipoId) {
+        var body = document.getElementById('jugadores-body-' + equipoId);
+        var chevron = document.getElementById('chevron-' + equipoId);
+        if (!body) return;
+
+        var isHidden = body.classList.contains('hidden');
+        if (isHidden) {
+            body.classList.remove('hidden');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+            if (!body.dataset.loaded) {
+                body.innerHTML = '<div class="px-4 py-4 text-sm text-gray-500 flex items-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Cargando jugadores...</div>';
+                fetch('/admin/jugadores/equipo/' + equipoId, {credentials: 'same-origin'})
+                    .then(function(r) {
+                        if (!r.ok) throw new Error('Error ' + r.status);
+                        return r.text();
+                    })
+                    .then(function(html) {
+                        body.innerHTML = html;
+                        body.dataset.loaded = '1';
+                    })
+                    .catch(function() {
+                        body.innerHTML = '<div class="px-4 py-4 text-sm text-red-600">Error al cargar. Recargá la página.</div>';
+                    });
+            }
+        } else {
+            body.classList.add('hidden');
+            if (chevron) chevron.style.transform = '';
+        }
+    }
+
     function toggleNuevoEquipo(select) {
         var container = document.getElementById('nuevo_equipo_container');
         var input = document.getElementById('nombre_equipo');
