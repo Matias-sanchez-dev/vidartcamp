@@ -313,6 +313,10 @@ async def tabla_posiciones(request: Request, db: Session = Depends(get_db)):
         Equipo.goles_favor.desc()
     ).all()
 
+    print(f"[TABLA] torneo_id={torneo.id} ({torneo.nombre}) | equipos:")
+    for e in equipos:
+        print(f"[TABLA]   {e.nombre}: PJ={e.partidos_jugados} PTS={e.puntos}")
+
     return templates.TemplateResponse("tabla.html", {
         "request": request,
         "torneo": torneo,
@@ -820,6 +824,10 @@ def recalculate_torneo_positions(torneo_id: int, db: Session):
             visitante.partidos_empatados += 1
             local.puntos += 1
             visitante.puntos += 1
+
+    print(f"[RECALC] stats finales (antes de commit):")
+    for e in equipos_t:
+        print(f"[RECALC]   {e.nombre}: PJ={e.partidos_jugados} PTS={e.puntos} GF={e.goles_favor} GC={e.goles_contra}")
 
 
 @app.post("/admin/torneos/recalcular")
