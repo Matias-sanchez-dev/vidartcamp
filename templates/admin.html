@@ -201,6 +201,14 @@
                                         <a href="/admin?tab=torneos&torneo_id={{ t.id }}"
                                             class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-blue-700 transition">Seleccionar</a>
 
+                                        <!-- Recalcular tabla -->
+                                        <form method="POST" action="/admin/torneos/recalcular" class="inline">
+                                            <input type="hidden" name="torneo_id" value="{{ t.id }}">
+                                            <button type="submit"
+                                                class="text-xs bg-green-600 text-white px-3 py-1.5 rounded font-semibold hover:bg-green-700 transition">🔄
+                                                Recalcular tabla</button>
+                                        </form>
+
                                         <!-- Eliminar -->
                                         <form method="POST" action="/admin/torneos/eliminar" class="inline"
                                             onsubmit="return confirm('¿Eliminar torneo &quot;{{ t.nombre }}&quot;? ADVERTENCIA: Se borrarán todos los partidos y se desasignarán los equipos. Esta acción no se puede deshacer.')">

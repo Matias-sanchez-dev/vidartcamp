@@ -815,6 +815,28 @@ def recalculate_torneo_positions(torneo_id: int, db: Session):
             visitante.puntos += 1
 
 
+@app.post("/admin/torneos/recalcular")
+async def admin_recalcular_tabla(
+    request: Request,
+    torneo_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    torneo = db.query(Torneo).filter(Torneo.id == torneo_id).first()
+    if not torneo:
+        msg = urllib.parse.quote("Torneo no encontrado")
+        return RedirectResponse(url=f"/admin?tab=torneos&error={msg}", status_code=302)
+
+    recalculate_torneo_positions(torneo_id, db)
+    db.commit()
+
+    msg = urllib.parse.quote("Tabla de posiciones recalculada")
+    return RedirectResponse(url=f"/admin?tab=torneos&torneo_id={torneo_id}&ok={msg}", status_code=302)
+
+
 @app.post("/admin/torneos")
 async def admin_crear_torneo(
     request: Request,
@@ -1316,6 +1338,7 @@ async def admin_cargar_resultado(
     partido.goles_visitante = int(goles_visitante)
     partido.finalizado = True
     db.commit()
+    db.refresh(partido)
 
     if partido.torneo_id:
         recalculate_torneo_positions(partido.torneo_id, db)
