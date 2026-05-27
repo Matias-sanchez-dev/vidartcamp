@@ -768,6 +768,8 @@ def recalculate_torneo_positions(torneo_id: int, db: Session):
     equipos_t = db.query(Equipo).filter(Equipo.torneo_id == torneo_id, Equipo.activo == True).all()
     equipos_by_id = {e.id: e for e in equipos_t}
 
+    print(f"[RECALC] torneo_id={torneo_id} | equipos encontrados: {[e.nombre for e in equipos_t]}")
+
     for e in equipos_t:
         e.partidos_jugados = 0
         e.partidos_ganados = 0
@@ -784,10 +786,15 @@ def recalculate_torneo_positions(torneo_id: int, db: Session):
         Partido.goles_visitante != None
     ).all()
 
+    print(f"[RECALC] partidos finalizados encontrados: {len(partidos_finalizados)}")
+    for p in partidos_finalizados:
+        print(f"[RECALC]   J{p.jornada}: equipo_local_id={p.equipo_local_id} {p.goles_local}-{p.goles_visitante} equipo_visitante_id={p.equipo_visitante_id}")
+
     for p in partidos_finalizados:
         local = equipos_by_id.get(p.equipo_local_id)
         visitante = equipos_by_id.get(p.equipo_visitante_id)
         if not local or not visitante:
+            print(f"[RECALC] SKIP partido id={p.id}: local={local} visitante={visitante}")
             continue
 
         gl = int(p.goles_local)
