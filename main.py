@@ -797,33 +797,38 @@ def recalculate_torneo_positions(torneo_id: int, db: Session):
     for p in partidos_finalizados:
         local = equipos_by_id.get(p.equipo_local_id)
         visitante = equipos_by_id.get(p.equipo_visitante_id)
-        if not local or not visitante:
-            print(f"[RECALC] SKIP partido id={p.id}: local={local} visitante={visitante}")
+        if not local and not visitante:
+            print(f"[RECALC] SKIP partido id={p.id}: ningún equipo pertenece al torneo")
             continue
 
         gl = int(p.goles_local)
         gv = int(p.goles_visitante)
 
-        local.partidos_jugados += 1
-        visitante.partidos_jugados += 1
-        local.goles_favor += gl
-        local.goles_contra += gv
-        visitante.goles_favor += gv
-        visitante.goles_contra += gl
+        if local:
+            local.partidos_jugados += 1
+            local.goles_favor += gl
+            local.goles_contra += gv
+            if gl > gv:
+                local.partidos_ganados += 1
+                local.puntos += 3
+            elif gl < gv:
+                local.partidos_perdidos += 1
+            else:
+                local.partidos_empatados += 1
+                local.puntos += 1
 
-        if gl > gv:
-            local.partidos_ganados += 1
-            visitante.partidos_perdidos += 1
-            local.puntos += 3
-        elif gl < gv:
-            visitante.partidos_ganados += 1
-            local.partidos_perdidos += 1
-            visitante.puntos += 3
-        else:
-            local.partidos_empatados += 1
-            visitante.partidos_empatados += 1
-            local.puntos += 1
-            visitante.puntos += 1
+        if visitante:
+            visitante.partidos_jugados += 1
+            visitante.goles_favor += gv
+            visitante.goles_contra += gl
+            if gv > gl:
+                visitante.partidos_ganados += 1
+                visitante.puntos += 3
+            elif gv < gl:
+                visitante.partidos_perdidos += 1
+            else:
+                visitante.partidos_empatados += 1
+                visitante.puntos += 1
 
     print(f"[RECALC] stats finales (antes de commit):")
     for e in equipos_t:
