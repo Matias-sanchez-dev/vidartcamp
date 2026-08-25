@@ -10,12 +10,13 @@ from typing import Optional, List
 import uuid
 import urllib.parse
 import io
-from sqlalchemy import desc
+import json
+from sqlalchemy import desc, func
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from database import engine, get_db, Base
-from models import Usuario, Torneo, Equipo, Jugador, Partido, SesionQR
+from models import Usuario, Torneo, Equipo, Jugador, Partido, SesionQR, Gol
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -313,10 +314,6 @@ async def tabla_posiciones(request: Request, db: Session = Depends(get_db)):
         Equipo.goles_favor.desc()
     ).all()
 
-    print(f"[TABLA] torneo_id={torneo.id} ({torneo.nombre}) | equipos:")
-    for e in equipos:
-        print(f"[TABLA]   {e.nombre}: PJ={e.partidos_jugados} PTS={e.puntos}")
-
     return templates.TemplateResponse("tabla.html", {
         "request": request,
         "torneo": torneo,
@@ -374,6 +371,54 @@ async def fixture(request: Request, db: Session = Depends(get_db)):
         "request": request,
         "torneo": torneo,
         "partidos_por_jornada": partidos_por_jornada,
+        "torneos_publicos": torneos_publicos,
+    })
+
+
+@app.get("/goleadores", response_class=HTMLResponse)
+async def goleadores(request: Request, db: Session = Depends(get_db)):
+    """Top scorers table - supports multiple active tournaments via ?torneo_id="""
+    torneos_publicos = db.query(Torneo).filter(
+        Torneo.activo == True, Torneo.mostrar_publico == True
+    ).order_by(Torneo.id.desc()).all()
+
+    torneo_id_raw = request.query_params.get("torneo_id")
+    torneo = None
+    if torneo_id_raw:
+        try:
+            torneo = db.query(Torneo).filter(
+                Torneo.id == int(torneo_id_raw),
+                Torneo.activo == True,
+                Torneo.mostrar_publico == True
+            ).first()
+        except ValueError:
+            pass
+
+    if not torneo and torneos_publicos:
+        torneo = torneos_publicos[0]
+
+    if not torneo:
+        return templates.TemplateResponse("error.html", {
+            "request": request,
+            "mensaje": "No hay torneo activo en este momento"
+        })
+
+    goleadores_rows = db.query(
+        Jugador.nombre_completo.label("jugador"),
+        Equipo.nombre.label("equipo"),
+        func.sum(Gol.cantidad).label("goles")
+    ).join(Jugador, Gol.jugador_id == Jugador.id
+    ).join(Partido, Gol.partido_id == Partido.id
+    ).join(Equipo, Gol.equipo_id == Equipo.id
+    ).filter(
+        Partido.torneo_id == torneo.id
+    ).group_by(Jugador.id
+    ).order_by(func.sum(Gol.cantidad).desc(), Jugador.nombre_completo.asc()).all()
+
+    return templates.TemplateResponse("goleadores.html", {
+        "request": request,
+        "torneo": torneo,
+        "goleadores": goleadores_rows,
         "torneos_publicos": torneos_publicos,
     })
 
@@ -772,8 +817,6 @@ def recalculate_torneo_positions(torneo_id: int, db: Session):
     equipos_t = db.query(Equipo).filter(Equipo.torneo_id == torneo_id, Equipo.activo == True).all()
     equipos_by_id = {e.id: e for e in equipos_t}
 
-    print(f"[RECALC] torneo_id={torneo_id} | equipos encontrados: {[e.nombre for e in equipos_t]}")
-
     for e in equipos_t:
         e.partidos_jugados = 0
         e.partidos_ganados = 0
@@ -790,15 +833,10 @@ def recalculate_torneo_positions(torneo_id: int, db: Session):
         Partido.goles_visitante != None
     ).all()
 
-    print(f"[RECALC] partidos finalizados encontrados: {len(partidos_finalizados)}")
-    for p in partidos_finalizados:
-        print(f"[RECALC]   J{p.jornada}: equipo_local_id={p.equipo_local_id} {p.goles_local}-{p.goles_visitante} equipo_visitante_id={p.equipo_visitante_id}")
-
     for p in partidos_finalizados:
         local = equipos_by_id.get(p.equipo_local_id)
         visitante = equipos_by_id.get(p.equipo_visitante_id)
         if not local and not visitante:
-            print(f"[RECALC] SKIP partido id={p.id}: ningún equipo pertenece al torneo")
             continue
 
         gl = int(p.goles_local)
@@ -829,10 +867,6 @@ def recalculate_torneo_positions(torneo_id: int, db: Session):
             else:
                 visitante.partidos_empatados += 1
                 visitante.puntos += 1
-
-    print(f"[RECALC] stats finales (antes de commit):")
-    for e in equipos_t:
-        print(f"[RECALC]   {e.nombre}: PJ={e.partidos_jugados} PTS={e.puntos} GF={e.goles_favor} GC={e.goles_contra}")
 
 
 @app.post("/admin/torneos/recalcular")
@@ -985,7 +1019,9 @@ async def admin_eliminar_torneo(
         msg = urllib.parse.quote("Torneo no encontrado")
         return RedirectResponse(url=f"/admin?tab=torneos&error={msg}", status_code=302)
     
-    # Eliminar partidos asociados
+    # Eliminar goles y partidos asociados
+    partido_ids = db.query(Partido.id).filter(Partido.torneo_id == torneo_id)
+    db.query(Gol).filter(Gol.partido_id.in_(partido_ids)).delete(synchronize_session=False)
     db.query(Partido).filter(Partido.torneo_id == torneo_id).delete()
     
     # Desasignar equipos (poner torneo_id = NULL)
@@ -1331,12 +1367,48 @@ async def admin_crear_partido_hoy(
     return RedirectResponse(url=f"/admin?tab=partidos&torneo_id={torneo.id}&ok={msg}", status_code=302)
 
 
+@app.get("/api/admin/partidos/{partido_id}/detalle")
+async def admin_partido_detalle(partido_id: int, request: Request, db: Session = Depends(get_db)):
+    """Datos del partido + jugadores de ambos equipos + goleadores cargados (para el modal de resultado)"""
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    partido = db.query(Partido).filter(Partido.id == partido_id).first()
+    if not partido:
+        raise HTTPException(status_code=404, detail="Partido no encontrado")
+
+    def jugadores_de(equipo_id):
+        jugadores = db.query(Jugador).filter(
+            Jugador.equipo_id == equipo_id,
+            Jugador.activo == True
+        ).order_by(Jugador.nombre_completo.asc()).all()
+        return [{"id": j.id, "nombre": j.nombre_completo} for j in jugadores]
+
+    goles = db.query(Gol).filter(Gol.partido_id == partido.id).all()
+
+    return JSONResponse(content={
+        "partido": {
+            "id": partido.id,
+            "goles_local": partido.goles_local,
+            "goles_visitante": partido.goles_visitante,
+            "finalizado": partido.finalizado,
+            "local": {"id": partido.equipo_local_id, "nombre": partido.equipo_local.nombre},
+            "visitante": {"id": partido.equipo_visitante_id, "nombre": partido.equipo_visitante.nombre},
+        },
+        "jugadores_local": jugadores_de(partido.equipo_local_id),
+        "jugadores_visitante": jugadores_de(partido.equipo_visitante_id),
+        "goles": [{"jugador_id": g.jugador_id, "equipo_id": g.equipo_id, "cantidad": g.cantidad} for g in goles],
+    })
+
+
 @app.post("/admin/partidos/resultado")
 async def admin_cargar_resultado(
     request: Request,
     partido_id: int = Form(...),
     goles_local: int = Form(...),
     goles_visitante: int = Form(...),
+    goleadores: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     admin_token = request.cookies.get("admin_token")
@@ -1357,6 +1429,42 @@ async def admin_cargar_resultado(
     partido.goles_local = int(goles_local)
     partido.goles_visitante = int(goles_visitante)
     partido.finalizado = True
+
+    # Reemplazar goleadores del partido
+    db.query(Gol).filter(Gol.partido_id == partido.id).delete()
+    if goleadores:
+        try:
+            items = json.loads(goleadores)
+        except (ValueError, TypeError):
+            items = []
+
+        equipos_partido = {partido.equipo_local_id, partido.equipo_visitante_id}
+        cantidades = {}
+        for item in items if isinstance(items, list) else []:
+            try:
+                jugador_id = int(item.get("jugador_id"))
+                cantidad = int(item.get("cantidad", 1))
+            except (ValueError, TypeError, AttributeError):
+                continue
+            if cantidad < 1:
+                continue
+            cantidades[jugador_id] = cantidades.get(jugador_id, 0) + cantidad
+
+        for jugador_id, cantidad in cantidades.items():
+            jugador = db.query(Jugador).filter(
+                Jugador.id == jugador_id,
+                Jugador.activo == True,
+                Jugador.equipo_id.in_(equipos_partido)
+            ).first()
+            if not jugador:
+                continue
+            db.add(Gol(
+                partido_id=partido.id,
+                jugador_id=jugador.id,
+                equipo_id=jugador.equipo_id,
+                cantidad=min(cantidad, 99),
+            ))
+
     db.commit()
     db.refresh(partido)
 
@@ -1367,6 +1475,42 @@ async def admin_cargar_resultado(
     msg = urllib.parse.quote("Resultado guardado")
     tid = partido.torneo_id
     torneo_qs = f"&torneo_id={tid}" if tid else ""
+    return RedirectResponse(url=f"/admin?tab=partidos{torneo_qs}&ok={msg}", status_code=302)
+
+
+@app.post("/admin/partidos/editar")
+async def admin_editar_partido(
+    request: Request,
+    partido_id: int = Form(...),
+    fecha: str = Form(...),
+    hora: str = Form(...),
+    jornada: Optional[int] = Form(None),
+    cancha: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
+):
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    partido = db.query(Partido).filter(Partido.id == partido_id).first()
+    if not partido:
+        msg = urllib.parse.quote("Partido no encontrado")
+        return RedirectResponse(url=f"/admin?tab=partidos&error={msg}", status_code=302)
+
+    torneo_qs = f"&torneo_id={partido.torneo_id}" if partido.torneo_id else ""
+
+    try:
+        partido.fecha = date.fromisoformat(fecha)
+        partido.hora = dt_time.fromisoformat(hora)
+    except ValueError:
+        msg = urllib.parse.quote("Fecha u hora inválida")
+        return RedirectResponse(url=f"/admin?tab=partidos{torneo_qs}&error={msg}", status_code=302)
+
+    partido.jornada = jornada
+    partido.cancha = (cancha or "").strip() or None
+    db.commit()
+
+    msg = urllib.parse.quote("Partido actualizado")
     return RedirectResponse(url=f"/admin?tab=partidos{torneo_qs}&ok={msg}", status_code=302)
 
 
@@ -1388,6 +1532,7 @@ async def admin_eliminar_partido(
     torneo_id = partido.torneo_id
     era_finalizado = partido.finalizado
 
+    db.query(Gol).filter(Gol.partido_id == partido.id).delete()
     db.delete(partido)
     db.commit()
 
@@ -1398,6 +1543,193 @@ async def admin_eliminar_partido(
     msg = urllib.parse.quote("Partido eliminado")
     torneo_qs = f"&torneo_id={torneo_id}" if torneo_id else ""
     return RedirectResponse(url=f"/admin?tab=partidos{torneo_qs}&ok={msg}", status_code=302)
+
+
+@app.post("/admin/fixture/generar")
+async def admin_generar_fixture(
+    request: Request,
+    torneo_id: int = Form(...),
+    fecha_inicio: str = Form(...),
+    hora: str = Form("18:00"),
+    intervalo_dias: int = Form(7),
+    ida_vuelta: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
+):
+    """Genera fixture todos-contra-todos (método del círculo) para los equipos del torneo"""
+    admin = get_current_admin(request, db)
+    if not admin:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    torneo = db.query(Torneo).filter(Torneo.id == torneo_id).first()
+    if not torneo:
+        msg = urllib.parse.quote("Torneo no encontrado")
+        return RedirectResponse(url=f"/admin?tab=partidos&error={msg}", status_code=302)
+
+    partidos_existentes = db.query(Partido).filter(Partido.torneo_id == torneo_id).count()
+    if partidos_existentes > 0:
+        msg = urllib.parse.quote(
+            "El torneo ya tiene partidos cargados. Eliminá los partidos existentes antes de generar el fixture automático."
+        )
+        return RedirectResponse(url=f"/admin?tab=partidos&torneo_id={torneo_id}&error={msg}", status_code=302)
+
+    equipos_t = db.query(Equipo).filter(
+        Equipo.torneo_id == torneo_id,
+        Equipo.activo == True
+    ).order_by(Equipo.nombre.asc()).all()
+
+    if len(equipos_t) < 2:
+        msg = urllib.parse.quote("El torneo necesita al menos 2 equipos asignados para generar el fixture.")
+        return RedirectResponse(url=f"/admin?tab=partidos&torneo_id={torneo_id}&error={msg}", status_code=302)
+
+    try:
+        fecha_base = date.fromisoformat(fecha_inicio)
+        hora_dt = dt_time.fromisoformat(hora)
+        intervalo = max(1, int(intervalo_dias))
+    except ValueError:
+        msg = urllib.parse.quote("Fecha, hora o intervalo inválido")
+        return RedirectResponse(url=f"/admin?tab=partidos&torneo_id={torneo_id}&error={msg}", status_code=302)
+
+    # Método del círculo (round-robin)
+    ids = [e.id for e in equipos_t]
+    if len(ids) % 2 == 1:
+        ids.append(None)  # fecha libre
+    n = len(ids)
+
+    jornadas = []
+    rotacion = ids[:]
+    for ronda in range(n - 1):
+        pares = []
+        for i in range(n // 2):
+            a, b = rotacion[i], rotacion[n - 1 - i]
+            if a is None or b is None:
+                continue
+            # Alternar localía por ronda para repartir partidos de local
+            pares.append((a, b) if ronda % 2 == 0 else (b, a))
+        jornadas.append(pares)
+        rotacion = [rotacion[0]] + [rotacion[-1]] + rotacion[1:-1]
+
+    if ida_vuelta:
+        jornadas += [[(b, a) for (a, b) in pares] for pares in jornadas]
+
+    creados = 0
+    for numero_jornada, pares in enumerate(jornadas, 1):
+        fecha_jornada = fecha_base + timedelta(days=(numero_jornada - 1) * intervalo)
+        for local_id, visitante_id in pares:
+            db.add(Partido(
+                torneo_id=torneo_id,
+                equipo_local_id=local_id,
+                equipo_visitante_id=visitante_id,
+                fecha=fecha_jornada,
+                hora=hora_dt,
+                jornada=numero_jornada,
+            ))
+            creados += 1
+    db.commit()
+
+    msg = urllib.parse.quote(
+        f"Fixture generado: {len(jornadas)} jornada(s), {creados} partido(s). Ajustá horarios y canchas desde la lista."
+    )
+    return RedirectResponse(url=f"/admin?tab=partidos&torneo_id={torneo_id}&ok={msg}", status_code=302)
+
+
+@app.get("/admin/equipos/{equipo_id}/planilla")
+async def admin_descargar_planilla_equipo(equipo_id: int, request: Request, db: Session = Depends(get_db)):
+    """Planilla imprimible del equipo (Excel) para firmar con DNI el día del partido"""
+    admin = get_current_admin(request, db)
+    if not admin:
+        return RedirectResponse(url="/admin/login", status_code=302)
+
+    equipo = db.query(Equipo).filter(Equipo.id == equipo_id).first()
+    if not equipo:
+        raise HTTPException(status_code=404, detail="Equipo no encontrado")
+
+    jugadores = db.query(Jugador).filter(
+        Jugador.equipo_id == equipo_id,
+        Jugador.activo == True
+    ).order_by(Jugador.nombre_completo.asc()).all()
+
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Planilla"
+
+    thin = Side(style="thin")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    header_font = Font(name="Arial", bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="0F172A", end_color="0F172A", fill_type="solid")
+    center = Alignment(horizontal="center", vertical="center")
+
+    # Título
+    ws.merge_cells("A1:D1")
+    cell = ws.cell(row=1, column=1, value=f"PLANILLA DE JUGADORES - {equipo.nombre.upper()}")
+    cell.font = Font(name="Arial", bold=True, size=14)
+    cell.alignment = center
+    ws.row_dimensions[1].height = 26
+
+    subtitulo = equipo.torneo.nombre if equipo.torneo else "Sin torneo asignado"
+    ws.merge_cells("A2:D2")
+    cell = ws.cell(row=2, column=1, value=subtitulo)
+    cell.font = Font(name="Arial", size=11, color="475569")
+    cell.alignment = center
+
+    ws.merge_cells("A3:D3")
+    cell = ws.cell(row=3, column=1, value="Fecha: ______________    Rival: ____________________    Jornada: ______")
+    cell.font = Font(name="Arial", size=10)
+    ws.row_dimensions[3].height = 20
+
+    # Encabezados
+    fila_header = 5
+    headers = ["N°", "Apellido y Nombre", "DNI", "Firma"]
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=fila_header, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center
+        cell.border = border
+    ws.row_dimensions[fila_header].height = 22
+
+    fila = fila_header + 1
+    for i, jugador in enumerate(jugadores, 1):
+        ws.cell(row=fila, column=1, value=i).alignment = center
+        ws.cell(row=fila, column=2, value=jugador.nombre_completo)
+        ws.cell(row=fila, column=3, value=jugador.dni).alignment = center
+        for col in range(1, 5):
+            c = ws.cell(row=fila, column=col)
+            c.border = border
+            c.font = Font(name="Arial", size=11)
+        ws.row_dimensions[fila].height = 26  # espacio para la firma
+        fila += 1
+
+    # Filas en blanco extra por si hay que anotar a mano
+    for _ in range(3):
+        for col in range(1, 5):
+            ws.cell(row=fila, column=col).border = border
+        ws.row_dimensions[fila].height = 26
+        fila += 1
+
+    ws.column_dimensions["A"].width = 6
+    ws.column_dimensions["B"].width = 35
+    ws.column_dimensions["C"].width = 15
+    ws.column_dimensions["D"].width = 30
+
+    # Configuración de impresión
+    ws.page_setup.orientation = "portrait"
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.print_options.horizontalCentered = True
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    nombre_archivo = urllib.parse.quote(f"planilla_{equipo.nombre.replace(' ', '_').lower()}.xlsx")
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{nombre_archivo}"},
+    )
 
 
 @app.get("/admin/carga-masiva/plantilla")
@@ -1620,13 +1952,6 @@ async def admin_carga_masiva(
 @app.get("/admin/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
     return RedirectResponse(url="/admin", status_code=302)
-
-
-@app.get("/admin/logout")
-async def admin_logout():
-    response = RedirectResponse(url="/admin/login", status_code=302)
-    response.delete_cookie("admin_token")
-    return response
 
 
 if __name__ == "__main__":

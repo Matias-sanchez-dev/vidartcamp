@@ -1,6 +1,14 @@
 {% if jugadores|length == 0 %}
 <div class="px-4 py-4 text-sm text-gray-600">Sin jugadores activos.</div>
 {% else %}
+<div class="px-3 sm:px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/60">
+    <span class="text-xs text-gray-500">{{ jugadores|length }} jugador(es) activo(s)</span>
+    <a href="/admin/equipos/{{ equipo.id }}/planilla"
+        class="text-xs bg-slate-700 text-white px-3 py-1.5 rounded font-semibold hover:bg-slate-800 transition whitespace-nowrap"
+        title="Excel con la lista de jugadores y columna de firma, para validar con DNI el día del partido">
+        📋 Descargar planilla firmable
+    </a>
+</div>
 <div class="overflow-x-auto -mx-3 sm:mx-0">
     <table class="w-full text-xs sm:text-sm">
         <thead>

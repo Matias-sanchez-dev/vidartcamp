@@ -104,6 +104,22 @@ class Partido(Base):
     torneo = relationship("Torneo", back_populates="partidos")
     equipo_local = relationship("Equipo", foreign_keys=[equipo_local_id], back_populates="partidos_local")
     equipo_visitante = relationship("Equipo", foreign_keys=[equipo_visitante_id], back_populates="partidos_visitante")
+    goles = relationship("Gol", back_populates="partido", cascade="all, delete-orphan")
+
+
+class Gol(Base):
+    """Goles por jugador en cada partido (para tabla de goleadores)"""
+    __tablename__ = "goles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    partido_id = Column(Integer, ForeignKey("partidos.id"), index=True, nullable=False)
+    jugador_id = Column(Integer, ForeignKey("jugadores.id"), index=True, nullable=False)
+    equipo_id = Column(Integer, ForeignKey("equipos.id"), nullable=False)
+    cantidad = Column(Integer, default=1, nullable=False)
+
+    # Relationships
+    partido = relationship("Partido", back_populates="goles")
+    jugador = relationship("Jugador")
 
 
 class SesionQR(Base):

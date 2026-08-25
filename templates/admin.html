@@ -92,6 +92,12 @@
                 </div>
                 {% endif %}
 
+                {% if error %}
+                <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded mb-4">
+                    {{ error }}
+                </div>
+                {% endif %}
+
                 {% if active_tab == 'torneos' %}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-5">
@@ -261,12 +267,6 @@
                 </div>
                 {% endif %}
 
-                {% if error %}
-                <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded mb-4">
-                    {{ error }}
-                </div>
-                {% endif %}
-
                 {% if active_tab == 'dashboard' %}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-5">
@@ -354,6 +354,11 @@
                                         </div>
                                     </div>
                                     <div class="flex gap-2">
+                                        <a href="/admin/equipos/{{ equipo.id }}/planilla"
+                                            class="text-xs bg-slate-700 text-white px-3 py-1.5 rounded font-semibold hover:bg-slate-800 transition whitespace-nowrap"
+                                            title="Descargar planilla imprimible para firmar con DNI">
+                                            📋 Planilla
+                                        </a>
                                         <form method="POST" action="/admin/equipos/eliminar" class="inline"
                                             onsubmit="return confirm('¿Eliminar equipo &quot;{{ equipo.nombre }}&quot;?\n\nADVERTENCIA: También se eliminarán todos los jugadores asociados a este equipo.\n\nEsta acción no se puede deshacer.')">
                                             <input type="hidden" name="equipo_id" value="{{ equipo.id }}">
@@ -574,7 +579,7 @@
                 {% endif %}
 
                 {% if active_tab == 'partidos' %}
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     <div class="bg-white rounded-lg border border-gray-200 p-5">
                         <h3 class="text-lg font-bold text-gray-900 mb-4">Crear partido</h3>
                         {% if not torneo_seleccionado %}
@@ -644,59 +649,140 @@
                 </div>
 
                 <div class="bg-white rounded-lg border border-gray-200 p-5">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-lg">⚡</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Generar fixture automático</h3>
+                            <p class="text-xs text-gray-500">Todos contra todos, con jornadas y fechas automáticas</p>
+                        </div>
+                    </div>
+
+                    {% if not torneo_seleccionado %}
+                    <div class="text-sm text-gray-600">Seleccioná un torneo arriba para generar el fixture.</div>
+                    {% elif equipos_torneo|length < 2 %}
+                    <div class="text-sm text-gray-600">Asigná al menos 2 equipos al torneo para generar el fixture.
+                    </div>
+                    {% else %}
+                    <form method="POST" action="/admin/fixture/generar"
+                        onsubmit="return confirm('¿Generar fixture todos contra todos para {{ equipos_torneo|length }} equipos?\nSolo funciona si el torneo no tiene partidos cargados.')">
+                        <input type="hidden" name="torneo_id" value="{{ torneo_seleccionado.id }}">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2" for="gen_fecha">Primera
+                                    jornada</label>
+                                <input id="gen_fecha" name="fecha_inicio" type="date" required
+                                    value="{{ hoy.isoformat() }}"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2" for="gen_hora">Hora por
+                                    defecto</label>
+                                <input id="gen_hora" name="hora" type="time" required value="18:00"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 items-end">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2" for="gen_intervalo">Días entre
+                                    jornadas</label>
+                                <input id="gen_intervalo" name="intervalo_dias" type="number" min="1" value="7" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700 pb-3">
+                                <input type="checkbox" name="ida_vuelta" value="1" class="h-4 w-4">
+                                Ida y vuelta
+                            </label>
+                        </div>
+
+                        <button type="submit"
+                            class="bg-amber-500 text-white px-5 py-3 rounded-lg font-semibold hover:bg-amber-600 transition">
+                            ⚡ Generar fixture
+                        </button>
+                        <p class="text-xs text-gray-500 mt-3">
+                            Se crean todas las jornadas de una vez. Después podés ajustar hora, fecha y cancha de cada
+                            partido con el botón ✏️ de la lista.
+                        </p>
+                    </form>
+                    {% endif %}
+                </div>
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-5">
                     <h3 class="text-lg font-bold text-gray-900 mb-4">Partidos del torneo</h3>
                     {% if not torneo_seleccionado %}
                     <div class="text-gray-600 text-sm">Seleccioná un torneo arriba.</div>
                     {% elif partidos_torneo|length == 0 %}
-                    <div class="text-gray-600 text-sm">No hay partidos cargados para este torneo.</div>
+                    <div class="text-gray-600 text-sm">No hay partidos cargados para este torneo. Podés crearlos uno
+                        por uno o generar el fixture completo automáticamente.</div>
                     {% else %}
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="text-left text-gray-500 border-b">
-                                    <th class="py-2 pr-3">Jornada</th>
+                                    <th class="py-2 pr-3">J</th>
                                     <th class="py-2 pr-3">Fecha</th>
                                     <th class="py-2 pr-3">Hora</th>
-                                    <th class="py-2 pr-3">Local</th>
-                                    <th class="py-2 pr-3">Visitante</th>
+                                    <th class="py-2 pr-3">Partido</th>
                                     <th class="py-2 pr-3">Resultado</th>
-                                    <th class="py-2 pr-3"></th>
+                                    <th class="py-2 pr-3">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for partido in partidos_torneo %}
-                                <tr class="border-b last:border-b-0">
-                                    <td class="py-2 pr-3">{{ partido.jornada or '-' }}</td>
-                                    <td class="py-2 pr-3">{{ partido.fecha.strftime("%Y-%m-%d") }}</td>
-                                    <td class="py-2 pr-3 font-semibold">{{ partido.hora.strftime("%H:%M") }}</td>
-                                    <td class="py-2 pr-3">{{ partido.equipo_local.nombre }}</td>
-                                    <td class="py-2 pr-3">{{ partido.equipo_visitante.nombre }}</td>
+                                <tr class="border-b last:border-b-0 {% if partido.finalizado %}bg-emerald-50/40{% endif %}">
+                                    <td class="py-2 pr-3 text-gray-600">{{ partido.jornada or '-' }}</td>
+                                    <td class="py-2 pr-3 whitespace-nowrap">{{ partido.fecha.strftime("%d/%m/%Y") }}</td>
+                                    <td class="py-2 pr-3 font-semibold whitespace-nowrap">{{ partido.hora.strftime("%H:%M") }}</td>
                                     <td class="py-2 pr-3">
-                                        <form method="POST" action="/admin/partidos/resultado"
-                                            class="flex items-center gap-2">
-                                            <input type="hidden" name="partido_id" value="{{ partido.id }}">
-                                            <input type="number" name="goles_local"
-                                                value="{{ partido.goles_local if partido.goles_local is not none else '' }}"
-                                                class="w-16 px-2 py-1 border border-gray-300 rounded" min="0" required>
-                                            <span class="text-gray-600">-</span>
-                                            <input type="number" name="goles_visitante"
-                                                value="{{ partido.goles_visitante if partido.goles_visitante is not none else '' }}"
-                                                class="w-16 px-2 py-1 border border-gray-300 rounded" min="0" required>
-                                            <button type="submit"
-                                                class="bg-blue-600 text-white px-3 py-1 rounded font-semibold hover:bg-blue-700 transition">
-                                                Guardar
-                                            </button>
-                                        </form>
+                                        <span class="font-semibold text-gray-900">{{ partido.equipo_local.nombre }}</span>
+                                        <span class="text-gray-400 text-xs mx-1">vs</span>
+                                        <span class="font-semibold text-gray-900">{{ partido.equipo_visitante.nombre }}</span>
+                                        {% if partido.cancha %}
+                                        <span class="text-xs text-gray-500 block sm:inline sm:ml-2">📍 {{ partido.cancha }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-2 pr-3 whitespace-nowrap">
+                                        {% if partido.finalizado and partido.goles_local is not none %}
+                                        <span
+                                            class="inline-flex items-center rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-200 px-2.5 py-1 text-xs font-extrabold">
+                                            {{ partido.goles_local }} - {{ partido.goles_visitante }}
+                                        </span>
+                                        {% else %}
+                                        <span
+                                            class="inline-flex items-center rounded-lg bg-gray-100 text-gray-600 px-2.5 py-1 text-xs font-semibold">
+                                            Pendiente
+                                        </span>
+                                        {% endif %}
                                     </td>
                                     <td class="py-2">
-                                        <form method="POST" action="/admin/partidos/eliminar" class="inline"
-                                            onsubmit="return confirm('¿Eliminar el partido {{ partido.equipo_local.nombre }} vs {{ partido.equipo_visitante.nombre }}?\nEsta acción no se puede deshacer.')">
-                                            <input type="hidden" name="partido_id" value="{{ partido.id }}">
-                                            <button type="submit"
-                                                class="text-xs bg-red-600 text-white px-2 py-1 rounded font-semibold hover:bg-red-700 transition whitespace-nowrap">
-                                                🗑️ Borrar
+                                        <div class="flex items-center gap-1.5 whitespace-nowrap">
+                                            <button type="button" onclick="abrirResultado({{ partido.id }})"
+                                                class="text-xs bg-blue-600 text-white px-2.5 py-1.5 rounded font-semibold hover:bg-blue-700 transition"
+                                                title="{% if partido.finalizado %}Editar resultado y goleadores{% else %}Cargar resultado y goleadores{% endif %}">
+                                                ⚽ {% if partido.finalizado %}Editar{% else %}Resultado{% endif %}
                                             </button>
-                                        </form>
+                                            <button type="button" onclick="abrirEditarPartido(this)"
+                                                data-id="{{ partido.id }}"
+                                                data-fecha="{{ partido.fecha.isoformat() }}"
+                                                data-hora="{{ partido.hora.strftime('%H:%M') }}"
+                                                data-jornada="{{ partido.jornada or '' }}"
+                                                data-cancha="{{ partido.cancha or '' }}"
+                                                class="text-xs bg-gray-200 text-gray-800 px-2.5 py-1.5 rounded font-semibold hover:bg-gray-300 transition"
+                                                title="Editar fecha, hora, jornada y cancha">
+                                                ✏️
+                                            </button>
+                                            <form method="POST" action="/admin/partidos/eliminar" class="inline"
+                                                onsubmit="return confirm('¿Eliminar el partido {{ partido.equipo_local.nombre }} vs {{ partido.equipo_visitante.nombre }}?\nEsta acción no se puede deshacer.')">
+                                                <input type="hidden" name="partido_id" value="{{ partido.id }}">
+                                                <button type="submit"
+                                                    class="text-xs bg-red-600 text-white px-2.5 py-1.5 rounded font-semibold hover:bg-red-700 transition"
+                                                    title="Eliminar partido">
+                                                    🗑️
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -705,7 +791,132 @@
                     </div>
                     {% endif %}
                 </div>
-        </div>
+
+                <!-- Modal: cargar resultado + goleadores -->
+                <div id="modalResultado" class="hidden fixed inset-0 z-50">
+                    <div class="absolute inset-0 bg-slate-900/60" onclick="cerrarModal('modalResultado')"></div>
+                    <div
+                        class="relative max-w-2xl mt-6 sm:mt-12 mb-6 bg-white rounded-2xl shadow-2xl max-h-[88vh] overflow-y-auto mx-3 sm:mx-auto">
+                        <div class="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between rounded-t-2xl">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900">Resultado del partido</h3>
+                                <p class="text-xs text-gray-500" id="resSubtitulo"></p>
+                            </div>
+                            <button type="button" onclick="cerrarModal('modalResultado')"
+                                class="text-gray-400 hover:text-gray-700 text-xl leading-none px-2">✕</button>
+                        </div>
+
+                        <div id="resCargando" class="px-5 py-10 text-center text-sm text-gray-500">Cargando datos del
+                            partido...</div>
+
+                        <form method="POST" action="/admin/partidos/resultado" id="formResultado" class="hidden px-5 py-4"
+                            onsubmit="return prepararGoleadores()">
+                            <input type="hidden" name="partido_id" id="resPartidoId">
+                            <input type="hidden" name="goleadores" id="resGoleadoresJson">
+
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="text-center">
+                                    <div class="font-bold text-gray-900 text-sm mb-2 truncate" id="resNombreLocal"></div>
+                                    <input type="number" name="goles_local" id="resGolesLocal" min="0" required
+                                        oninput="actualizarContador('local'); actualizarContador('visitante')"
+                                        class="w-24 mx-auto text-center text-2xl font-extrabold px-3 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 block">
+                                </div>
+                                <div class="text-center">
+                                    <div class="font-bold text-gray-900 text-sm mb-2 truncate" id="resNombreVisitante"></div>
+                                    <input type="number" name="goles_visitante" id="resGolesVisitante" min="0" required
+                                        oninput="actualizarContador('local'); actualizarContador('visitante')"
+                                        class="w-24 mx-auto text-center text-2xl font-extrabold px-3 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 block">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                                <div class="border border-gray-200 rounded-xl p-3 bg-gray-50">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="text-sm font-bold text-gray-800">⚽ Goleadores <span
+                                                id="tituloGoleadoresLocal"></span></div>
+                                        <span class="text-xs text-gray-500" id="contadorLocal"></span>
+                                    </div>
+                                    <div id="filasGoleadoresLocal" class="space-y-2"></div>
+                                    <button type="button" onclick="agregarGoleador('local')"
+                                        class="mt-2 text-xs font-semibold text-blue-700 hover:underline">+ Agregar
+                                        goleador</button>
+                                </div>
+                                <div class="border border-gray-200 rounded-xl p-3 bg-gray-50">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="text-sm font-bold text-gray-800">⚽ Goleadores <span
+                                                id="tituloGoleadoresVisitante"></span></div>
+                                        <span class="text-xs text-gray-500" id="contadorVisitante"></span>
+                                    </div>
+                                    <div id="filasGoleadoresVisitante" class="space-y-2"></div>
+                                    <button type="button" onclick="agregarGoleador('visitante')"
+                                        class="mt-2 text-xs font-semibold text-blue-700 hover:underline">+ Agregar
+                                        goleador</button>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-500 mb-4">Los goleadores son opcionales: si un gol fue en contra
+                                o no se sabe quién lo hizo, podés dejar goles sin asignar.</p>
+
+                            <div class="flex items-center justify-end gap-2 pb-2">
+                                <button type="button" onclick="cerrarModal('modalResultado')"
+                                    class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition">Cancelar</button>
+                                <button type="submit"
+                                    class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
+                                    Guardar resultado
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal: editar datos del partido -->
+                <div id="modalEditarPartido" class="hidden fixed inset-0 z-50">
+                    <div class="absolute inset-0 bg-slate-900/60" onclick="cerrarModal('modalEditarPartido')"></div>
+                    <div class="relative max-w-md mx-3 sm:mx-auto mt-12 bg-white rounded-2xl shadow-2xl p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-900">Editar partido</h3>
+                            <button type="button" onclick="cerrarModal('modalEditarPartido')"
+                                class="text-gray-400 hover:text-gray-700 text-xl leading-none px-2">✕</button>
+                        </div>
+                        <form method="POST" action="/admin/partidos/editar">
+                            <input type="hidden" name="partido_id" id="editPartidoId">
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Fecha</label>
+                                    <input type="date" name="fecha" id="editFecha" required
+                                        class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Hora</label>
+                                    <input type="time" name="hora" id="editHora" required
+                                        class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-5">
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Jornada</label>
+                                    <input type="number" name="jornada" id="editJornada" min="1"
+                                        class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="(opcional)">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-semibold mb-2 text-sm">Cancha</label>
+                                    <input type="text" name="cancha" id="editCancha"
+                                        class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="(opcional)">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-end gap-2">
+                                <button type="button" onclick="cerrarModal('modalEditarPartido')"
+                                    class="px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition">Cancelar</button>
+                                <button type="submit"
+                                    class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
+                                    Guardar cambios
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
         {% endif %}
         </section>
     </div>
@@ -794,5 +1005,174 @@
             });
         }
     });
+
+    // ==================== Modales de partidos ====================
+    var jugadoresPorLado = { local: [], visitante: [] };
+
+    function cerrarModal(id) {
+        var m = document.getElementById(id);
+        if (m) m.classList.add('hidden');
+    }
+
+    function abrirEditarPartido(btn) {
+        document.getElementById('editPartidoId').value = btn.dataset.id;
+        document.getElementById('editFecha').value = btn.dataset.fecha;
+        document.getElementById('editHora').value = btn.dataset.hora;
+        document.getElementById('editJornada').value = btn.dataset.jornada;
+        document.getElementById('editCancha').value = btn.dataset.cancha;
+        document.getElementById('modalEditarPartido').classList.remove('hidden');
+    }
+
+    function abrirResultado(partidoId) {
+        var modal = document.getElementById('modalResultado');
+        var cargando = document.getElementById('resCargando');
+        var form = document.getElementById('formResultado');
+        modal.classList.remove('hidden');
+        cargando.classList.remove('hidden');
+        form.classList.add('hidden');
+
+        fetch('/api/admin/partidos/' + partidoId + '/detalle', { credentials: 'same-origin' })
+            .then(function (r) {
+                if (!r.ok) throw new Error('Error ' + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                var p = data.partido;
+                jugadoresPorLado.local = data.jugadores_local;
+                jugadoresPorLado.visitante = data.jugadores_visitante;
+
+                document.getElementById('resPartidoId').value = p.id;
+                document.getElementById('resSubtitulo').textContent = p.local.nombre + ' vs ' + p.visitante.nombre;
+                document.getElementById('resNombreLocal').textContent = p.local.nombre;
+                document.getElementById('resNombreVisitante').textContent = p.visitante.nombre;
+                document.getElementById('tituloGoleadoresLocal').textContent = '· ' + p.local.nombre;
+                document.getElementById('tituloGoleadoresVisitante').textContent = '· ' + p.visitante.nombre;
+                document.getElementById('resGolesLocal').value = p.goles_local !== null ? p.goles_local : '';
+                document.getElementById('resGolesVisitante').value = p.goles_visitante !== null ? p.goles_visitante : '';
+
+                document.getElementById('filasGoleadoresLocal').innerHTML = '';
+                document.getElementById('filasGoleadoresVisitante').innerHTML = '';
+
+                var localIds = data.jugadores_local.map(function (j) { return j.id; });
+                data.goles.forEach(function (g) {
+                    var lado = localIds.indexOf(g.jugador_id) !== -1 ? 'local' : 'visitante';
+                    agregarGoleador(lado, g.jugador_id, g.cantidad);
+                });
+
+                actualizarContador('local');
+                actualizarContador('visitante');
+                cargando.classList.add('hidden');
+                form.classList.remove('hidden');
+            })
+            .catch(function () {
+                cargando.textContent = 'Error al cargar el partido. Cerrá y volvé a intentar.';
+            });
+    }
+
+    function agregarGoleador(lado, jugadorId, cantidad) {
+        var contenedor = document.getElementById(lado === 'local' ? 'filasGoleadoresLocal' : 'filasGoleadoresVisitante');
+        var jugadores = jugadoresPorLado[lado];
+
+        if (!jugadores || jugadores.length === 0) {
+            contenedor.innerHTML = '<div class="text-xs text-gray-500">Este equipo no tiene jugadores cargados.</div>';
+            return;
+        }
+
+        var fila = document.createElement('div');
+        fila.className = 'flex items-center gap-1.5 fila-goleador';
+        fila.dataset.lado = lado;
+
+        var select = document.createElement('select');
+        select.className = 'flex-1 min-w-0 px-2 py-1.5 text-xs border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 sel-jugador';
+        var opcionVacia = document.createElement('option');
+        opcionVacia.value = '';
+        opcionVacia.textContent = 'Seleccionar jugador...';
+        select.appendChild(opcionVacia);
+        jugadores.forEach(function (j) {
+            var o = document.createElement('option');
+            o.value = j.id;
+            o.textContent = j.nombre;
+            if (jugadorId && j.id === jugadorId) o.selected = true;
+            select.appendChild(o);
+        });
+
+        var input = document.createElement('input');
+        input.type = 'number';
+        input.min = '1';
+        input.value = cantidad || 1;
+        input.title = 'Cantidad de goles';
+        input.className = 'w-14 px-2 py-1.5 text-xs text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 inp-cantidad';
+        input.addEventListener('input', function () { actualizarContador(lado); });
+
+        var quitar = document.createElement('button');
+        quitar.type = 'button';
+        quitar.textContent = '✕';
+        quitar.title = 'Quitar';
+        quitar.className = 'text-gray-400 hover:text-red-600 text-sm px-1';
+        quitar.addEventListener('click', function () {
+            fila.remove();
+            actualizarContador(lado);
+        });
+
+        fila.appendChild(select);
+        fila.appendChild(input);
+        fila.appendChild(quitar);
+        contenedor.appendChild(fila);
+        actualizarContador(lado);
+    }
+
+    function golesAsignados(lado) {
+        var contenedor = document.getElementById(lado === 'local' ? 'filasGoleadoresLocal' : 'filasGoleadoresVisitante');
+        var total = 0;
+        contenedor.querySelectorAll('.fila-goleador').forEach(function (fila) {
+            var sel = fila.querySelector('.sel-jugador');
+            var cant = parseInt(fila.querySelector('.inp-cantidad').value, 10);
+            if (sel.value && cant > 0) total += cant;
+        });
+        return total;
+    }
+
+    function actualizarContador(lado) {
+        var span = document.getElementById(lado === 'local' ? 'contadorLocal' : 'contadorVisitante');
+        if (!span) return;
+        var golesInput = document.getElementById(lado === 'local' ? 'resGolesLocal' : 'resGolesVisitante');
+        var goles = parseInt(golesInput.value, 10);
+        var asignados = golesAsignados(lado);
+        if (isNaN(goles)) {
+            span.textContent = asignados + ' asignado(s)';
+            span.className = 'text-xs text-gray-500';
+        } else if (asignados > goles) {
+            span.textContent = asignados + ' / ' + goles + ' ⚠️';
+            span.className = 'text-xs text-red-600 font-bold';
+        } else {
+            span.textContent = asignados + ' / ' + goles;
+            span.className = asignados === goles ? 'text-xs text-emerald-600 font-bold' : 'text-xs text-gray-500';
+        }
+    }
+
+    function prepararGoleadores() {
+        var golesLocal = parseInt(document.getElementById('resGolesLocal').value, 10);
+        var golesVisitante = parseInt(document.getElementById('resGolesVisitante').value, 10);
+
+        if (golesAsignados('local') > golesLocal) {
+            alert('Hay más goles asignados a jugadores del equipo local que goles en el marcador.');
+            return false;
+        }
+        if (golesAsignados('visitante') > golesVisitante) {
+            alert('Hay más goles asignados a jugadores del equipo visitante que goles en el marcador.');
+            return false;
+        }
+
+        var items = [];
+        document.querySelectorAll('#formResultado .fila-goleador').forEach(function (fila) {
+            var sel = fila.querySelector('.sel-jugador');
+            var cant = parseInt(fila.querySelector('.inp-cantidad').value, 10);
+            if (sel.value && cant > 0) {
+                items.push({ jugador_id: parseInt(sel.value, 10), cantidad: cant });
+            }
+        });
+        document.getElementById('resGoleadoresJson').value = JSON.stringify(items);
+        return true;
+    }
 </script>
 {% endblock %}

@@ -8,6 +8,8 @@
         class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Inicio</a>
     <a href="/fixture"
         class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Fixture</a>
+    <a href="/goleadores"
+        class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Goleadores</a>
     <a href="/login"
         class="rounded-lg px-3 py-2 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 transition">Ingresar</a>
 </div>
@@ -36,7 +38,10 @@
                 <h2 class="text-3xl font-extrabold tracking-tight text-slate-900">Tabla de posiciones</h2>
                 <p class="text-slate-600 mt-1">{{ torneo.nombre }}</p>
             </div>
-            <a href="/fixture?torneo_id={{ torneo.id }}" class="text-sm font-semibold text-slate-900 hover:underline">Ver fixture</a>
+            <div class="flex flex-col items-end gap-1">
+                <a href="/fixture?torneo_id={{ torneo.id }}" class="text-sm font-semibold text-slate-900 hover:underline">Ver fixture</a>
+                <a href="/goleadores?torneo_id={{ torneo.id }}" class="text-sm font-semibold text-slate-900 hover:underline">Ver goleadores</a>
+            </div>
         </div>
 
         {% if equipos|length == 0 %}
@@ -60,11 +65,11 @@
                 </thead>
                 <tbody>
                     {% for e in equipos %}
-                    <tr class="border-b last:border-b-0 hover:bg-slate-50/60 transition">
-                        <td class="py-2 px-2 sm:py-3 sm:px-4 font-semibold text-slate-700 sticky left-0 bg-white z-10">
+                    <tr class="border-b last:border-b-0 hover:bg-slate-50/60 transition {% if loop.index == 1 %}bg-emerald-50/70{% endif %}">
+                        <td class="py-2 px-2 sm:py-3 sm:px-4 font-semibold text-slate-700 sticky left-0 z-10 {% if loop.index == 1 %}bg-emerald-50{% else %}bg-white{% endif %}">
                             {{ loop.index }}</td>
                         <td
-                            class="py-2 px-2 sm:py-3 sm:px-4 font-semibold text-slate-900 sticky left-8 sm:left-12 bg-white z-10">
+                            class="py-2 px-2 sm:py-3 sm:px-4 font-semibold text-slate-900 sticky left-8 sm:left-12 z-10 {% if loop.index == 1 %}bg-emerald-50{% else %}bg-white{% endif %}">
                             {{ e.nombre }}</td>
                         <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700">{{ e.partidos_jugados }}</td>
                         <td class="py-2 px-2 sm:py-3 sm:px-4 text-slate-700">{{ e.partidos_ganados }}</td>
