@@ -57,3 +57,6 @@ coverage.xml
 *.pem
 *.key
 *.crt
+
+# Script suelto con token de MercadoPago (no comitear)
+token
